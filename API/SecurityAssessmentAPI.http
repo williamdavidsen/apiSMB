@@ -1,0 +1,6 @@
+@SecurityAssessmentAPI_HostAddress = http://localhost:5052
+
+GET {{SecurityAssessmentAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
