@@ -4,3 +4,17 @@ GET {{SecurityAssessmentAPI_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+POST {{SecurityAssessmentAPI_HostAddress}}/api/ssl/check
+Content-Type: application/json
+
+{
+  "domain": "google.com"
+}
+
+###
+
+GET {{SecurityAssessmentAPI_HostAddress}}/api/ssl/check/google.com
+Accept: application/json
+
+###

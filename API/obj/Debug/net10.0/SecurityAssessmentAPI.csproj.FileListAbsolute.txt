@@ -42,3 +42,6 @@ C:\Users\saski\Desktop\Bacheloropggave_main\API-basert-vurdering-av-sikkerhetsti
 C:\Users\saski\Desktop\Bacheloropggave_main\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\API\obj\Debug\net10.0\SecurityAssessmentAPI.pdb
 C:\Users\saski\Desktop\Bacheloropggave_main\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\API\obj\Debug\net10.0\SecurityAssessmentAPI.genruntimeconfig.cache
 C:\Users\saski\Desktop\Bacheloropggave_main\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\API\obj\Debug\net10.0\ref\SecurityAssessmentAPI.dll
+C:\Users\saski\Desktop\Bacheloropggave_main\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\API\bin\Debug\net10.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\saski\Desktop\Bacheloropggave_main\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\API\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\saski\Desktop\Bacheloropggave_main\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\API\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerUI.dll
