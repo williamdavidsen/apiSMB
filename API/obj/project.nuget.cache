@@ -1,20 +1,41 @@
 {
   "version": 2,
-  "dgSpecHash": "dgnmcXFA21o=",
-  "success": true,
+  "dgSpecHash": "ftngVNzI2/g=",
+  "success": false,
   "projectFilePath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\saski\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.5\\microsoft.aspnetcore.openapi.10.0.5.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.5\\microsoft.entityframeworkcore.10.0.5.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\10.0.5\\microsoft.entityframeworkcore.abstractions.10.0.5.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\10.0.5\\microsoft.entityframeworkcore.analyzers.10.0.5.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\microsoft.entityframeworkcore.inmemory\\10.0.5\\microsoft.entityframeworkcore.inmemory.10.0.5.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\microsoft.extensions.apidescription.server\\10.0.0\\microsoft.extensions.apidescription.server.10.0.0.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\microsoft.openapi\\2.4.1\\microsoft.openapi.2.4.1.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\swashbuckle.aspnetcore\\10.1.7\\swashbuckle.aspnetcore.10.1.7.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\10.1.7\\swashbuckle.aspnetcore.swagger.10.1.7.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\10.1.7\\swashbuckle.aspnetcore.swaggergen.10.1.7.nupkg.sha512",
-    "C:\\Users\\saski\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\10.1.7\\swashbuckle.aspnetcore.swaggerui.10.1.7.nupkg.sha512"
-  ],
-  "logs": []
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "Undefined",
+      "level": "Error",
+      "message": "Failed to download package 'Swashbuckle.AspNetCore.10.1.7' from 'https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore/10.1.7/swashbuckle.aspnetcore.10.1.7.nupkg'.\r\nThe SSL connection could not be established, see inner exception.\r\n  Authentication failed, see inner exception.\r\n  No credentials are available in the security package",
+      "projectPath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "filePath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Microsoft.EntityFrameworkCore.InMemory' from remote source 'https://api.nuget.org/v3-flatcontainer/microsoft.entityframeworkcore.inmemory/index.json'.\r\n  The SSL connection could not be established, see inner exception.\r\n  Authentication failed, see inner exception.\r\n  No credentials are available in the security package",
+      "projectPath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "filePath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Microsoft.EntityFrameworkCore' from remote source 'https://api.nuget.org/v3-flatcontainer/microsoft.entityframeworkcore/index.json'.\r\n  The SSL connection could not be established, see inner exception.\r\n  Authentication failed, see inner exception.\r\n  No credentials are available in the security package",
+      "projectPath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "filePath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Failed to retrieve information about 'Microsoft.AspNetCore.OpenApi' from remote source 'https://api.nuget.org/v3-flatcontainer/microsoft.aspnetcore.openapi/index.json'.\r\n  The SSL connection could not be established, see inner exception.\r\n  Authentication failed, see inner exception.\r\n  No credentials are available in the security package",
+      "projectPath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "filePath": "C:\\Users\\saski\\Desktop\\Bacheloropggave_main\\API-basert-vurdering-av-sikkerhetstilstand-for-SMB-kunder\\API\\SecurityAssessmentAPI.csproj",
+      "targetGraphs": []
+    }
+  ]
 }
