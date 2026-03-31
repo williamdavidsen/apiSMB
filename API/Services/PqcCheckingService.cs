@@ -33,6 +33,7 @@ namespace SecurityAssessmentAPI.Services
 
             try
             {
+                // PQC is reported as an evidence-based readiness signal, not as a hard compliance claim.
                 var sslLabsResponse = await WaitForSslLabsResultAsync(normalizedDomain, cancellationToken);
                 return ClassifyPqcReadiness(normalizedDomain, sslLabsResponse);
             }
@@ -101,6 +102,7 @@ namespace SecurityAssessmentAPI.Services
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
+            // Look only for explicit hybrid/PQC identifiers; modern classical groups alone are not enough to overclaim readiness.
             var pqcEvidence = evidence
                 .Where(value => ExplicitPqcKeywords.Any(keyword => value.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
                 .Distinct(StringComparer.OrdinalIgnoreCase)

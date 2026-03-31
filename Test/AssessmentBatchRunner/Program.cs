@@ -6,6 +6,7 @@ const string defaultBaseUrl = "http://localhost:1111";
 const string defaultDomainsFileName = "domains.txt";
 
 var projectDirectory = AppContext.BaseDirectory;
+// Walk back from the build output so the runner can locate shared input files from both IDE and CLI runs.
 for (var i = 0; i < 4; i++)
 {
     projectDirectory = Directory.GetParent(projectDirectory)?.FullName ?? projectDirectory;
@@ -125,6 +126,7 @@ foreach (var domain in domains)
             continue;
         }
 
+        // Keep one raw payload per domain so score changes can be traced back to the original API response.
         var rawJsonPath = Path.Combine(rawDirectory, $"{MakeSafeFileName(domain)}.json");
         await File.WriteAllTextAsync(rawJsonPath, body);
 
@@ -206,6 +208,7 @@ var jsonOutputPath = Path.Combine(runDirectory, $"assessment-results-{timestamp}
 var csvOutputPath = Path.Combine(runDirectory, $"assessment-results-{timestamp}.csv");
 var rawBundlePath = Path.Combine(runDirectory, $"assessment-raw-responses-{timestamp}.json");
 
+// Persist both analyst-friendly summaries and the unmodified response bundle for later verification.
 await File.WriteAllTextAsync(jsonOutputPath, JsonSerializer.Serialize(results, jsonOptions));
 await File.WriteAllTextAsync(csvOutputPath, BuildCsv(results));
 await File.WriteAllTextAsync(rawBundlePath, JsonSerializer.Serialize(rawResponses, jsonOptions));

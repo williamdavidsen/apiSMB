@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AssessmentBatchRunner")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ef040de240d729a4f8ce5b474dca547f88a0f79")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be5decbe1b84bb572999d0819f34414dbe260fc0")]
 [assembly: System.Reflection.AssemblyProductAttribute("AssessmentBatchRunner")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AssessmentBatchRunner")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

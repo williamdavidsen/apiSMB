@@ -32,9 +32,11 @@ namespace SecurityAssessmentAPI.Services
 
             if (!mxResult.Records.Any())
             {
+                // Skip the email module entirely when the domain does not advertise mail handling.
                 return CreateNoMailServiceResult(normalizedDomain);
             }
 
+            // Query SPF, DMARC, and a conservative DKIM selector set in parallel to keep DNS latency manageable.
             var txtTask = _dnsAnalysisClient.QueryAsync(normalizedDomain, "TXT", cancellationToken);
             var dmarcTask = _dnsAnalysisClient.QueryAsync($"_dmarc.{normalizedDomain}", "TXT", cancellationToken);
             var dkimTasks = CommonDkimSelectors.ToDictionary(
@@ -298,6 +300,7 @@ namespace SecurityAssessmentAPI.Services
                 return string.Empty;
             }
 
+            // Follow SPF redirect delegation so outsourced mail platforms are scored from the effective policy, not the wrapper.
             var redirectTarget = GetTagValue(spfRecord, "redirect");
             if (string.IsNullOrWhiteSpace(redirectTarget))
             {

@@ -71,6 +71,7 @@ namespace SecurityAssessmentAPI.Services
         {
             SslLabsResponse? latestResponse = null;
 
+            // SSL Labs is asynchronous, so poll until a usable terminal state is returned or the retry budget is exhausted.
             for (var attempt = 1; attempt <= SslLabsMaxAttempts; attempt++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -104,6 +105,7 @@ namespace SecurityAssessmentAPI.Services
             CancellationToken cancellationToken,
             Exception? originalException = null)
         {
+            // Hardenize keeps the assessment resilient when SSL Labs is unavailable, even though the dataset is less detailed.
             var hardenizeResponse = await _hardenizeClient.GetCertificateDiscoveryAsync(domain, cancellationToken);
             if (hardenizeResponse == null || hardenizeResponse.Records == null || !hardenizeResponse.Records.Any())
             {
@@ -178,6 +180,7 @@ namespace SecurityAssessmentAPI.Services
             CancellationToken cancellationToken,
             Exception? originalException = null)
         {
+            // A direct TLS handshake is the last fallback and only confirms what can be observed live from the endpoint itself.
             try
             {
                 using var tcpClient = new TcpClient();
@@ -320,6 +323,7 @@ namespace SecurityAssessmentAPI.Services
                 return result;
             }
 
+            // Merge endpoint observations so one multi-IP host is scored as a single customer-facing surface.
             var protocols = response.Endpoints
                 .SelectMany(endpoint => endpoint.Details?.Protocols ?? Enumerable.Empty<SslLabsProtocol>())
                 .GroupBy(protocol => $"{protocol.Name}:{protocol.Version}", StringComparer.OrdinalIgnoreCase)

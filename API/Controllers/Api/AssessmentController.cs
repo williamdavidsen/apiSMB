@@ -47,6 +47,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
         [HttpGet("check/{domain}")]
         public async Task<IActionResult> GetAssessmentCheck(string domain, CancellationToken cancellationToken)
         {
+            // Keep a route-based variant for quick manual testing and batch execution.
             if (string.IsNullOrWhiteSpace(domain))
             {
                 _logger.LogWarning("Invalid domain parameter: {Domain}", domain);

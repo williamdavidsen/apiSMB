@@ -23,6 +23,7 @@ namespace SecurityAssessmentAPI.Services
             var normalizedDomain = NormalizeDomain(domain);
             _logger.LogInformation("Reputation check started: {Domain}", normalizedDomain);
 
+            // Pull one normalized report and translate it into a bounded score instead of exposing provider-specific noise directly.
             var report = await _virusTotalClient.GetDomainReportAsync(normalizedDomain, cancellationToken);
             if (report == null)
             {

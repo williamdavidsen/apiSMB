@@ -19,6 +19,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
         [HttpGet("check/{domain}")]
         public async Task<IActionResult> GetPqcCheck(string domain, CancellationToken cancellationToken)
         {
+            // Expose PQC as a read-only inspection endpoint because it is derived entirely from TLS observations.
             if (string.IsNullOrWhiteSpace(domain))
             {
                 _logger.LogWarning("Invalid PQC domain parameter: {Domain}", domain);

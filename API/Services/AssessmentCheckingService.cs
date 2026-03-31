@@ -45,6 +45,7 @@ namespace SecurityAssessmentAPI.Services
         {
             _logger.LogInformation("Final assessment started: {Domain}", domain);
 
+            // Run the independent modules in parallel so the final assessment is bounded by the slowest provider, not their sum.
             var sslTask = _sslCheckingService.CheckSslAsync(domain, cancellationToken);
             var headersTask = _headersCheckingService.CheckHeadersAsync(domain, cancellationToken);
             var emailTask = _emailCheckingService.CheckEmailAsync(domain, cancellationToken);
@@ -90,6 +91,7 @@ namespace SecurityAssessmentAPI.Services
 
         private static void ApplyWeights(AssessmentCheckResult result, bool emailIncluded)
         {
+            // Rebalance the model when email does not apply so the final score still totals 100%.
             result.Weights.SslTls = emailIncluded ? SslWeightWithEmail : SslWeightWithoutEmail;
             result.Weights.HttpHeaders = emailIncluded ? HeadersWeightWithEmail : HeadersWeightWithoutEmail;
             result.Weights.EmailSecurity = emailIncluded ? EmailWeightWithEmail : 0m;
@@ -174,6 +176,7 @@ namespace SecurityAssessmentAPI.Services
             EmailCheckResult emailResult,
             ReputationCheckResult reputationResult)
         {
+            // Collapse detailed module findings into a short executive summary for the combined endpoint.
             if (!result.EmailModuleIncluded)
             {
                 result.Alerts.Add(new AssessmentAlert

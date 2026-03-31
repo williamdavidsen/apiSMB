@@ -28,6 +28,7 @@ namespace SecurityAssessmentAPI.Services
             _logger.LogInformation("Headers check started: {Domain}", domain);
 
             var normalizedDomain = NormalizeDomain(domain);
+            // Combine a third-party benchmark with a live probe so missing Observatory data does not block scoring.
             var observatoryTask = _mozillaObservatoryClient.ScanAsync(normalizedDomain, cancellationToken);
             var probeTask = _httpHeadersProbeClient.ProbeAsync(normalizedDomain, cancellationToken);
 
@@ -76,6 +77,7 @@ namespace SecurityAssessmentAPI.Services
             result.Criteria.MimeSniffingProtection = EvaluateMimeSniffingProtection(headers);
             result.Criteria.ReferrerPolicy = EvaluateReferrerPolicy(headers);
 
+            // Treat CSP and clickjacking protection as the core browser-side controls that drive the primary score.
             result.OverallScore =
                 result.Criteria.ContentSecurityPolicy.Score +
                 result.Criteria.ClickjackingProtection.Score;

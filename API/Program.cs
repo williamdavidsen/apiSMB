@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Register the API surface and documentation endpoints first so every module is exposed consistently.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
@@ -11,7 +11,7 @@ builder.Services.AddSwaggerGen();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-// HttpClient for SSL Labs API
+// Keep external integrations isolated behind typed clients so timeouts and retries can be tuned per provider.
 builder.Services.AddHttpClient<SecurityAssessmentAPI.Services.ISslLabsClient, SecurityAssessmentAPI.Services.SslLabsClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
@@ -41,7 +41,7 @@ builder.Services.AddHttpClient<SecurityAssessmentAPI.Services.IVirusTotalClient,
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
-// SSL Services
+// Compose the domain assessment pipeline from focused scoring services.
 builder.Services.AddScoped<SecurityAssessmentAPI.Services.ISslCheckingService, SecurityAssessmentAPI.Services.SslCheckingService>();
 builder.Services.AddScoped<SecurityAssessmentAPI.Services.IHeadersCheckingService, SecurityAssessmentAPI.Services.HeadersCheckingService>();
 builder.Services.AddScoped<SecurityAssessmentAPI.Services.IEmailCheckingService, SecurityAssessmentAPI.Services.EmailCheckingService>();
@@ -55,7 +55,7 @@ builder.Services.AddHttpClient<SecurityAssessmentAPI.Services.IHardenizeClient, 
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-// Entity Framework and DI
+// Use an in-memory store for local development and demo flows without requiring database setup.
 builder.Services.AddDbContext<SecurityAssessmentAPI.DAL.ApplicationDbContext>(options =>
     options.UseInMemoryDatabase("SecurityAssessmentDb"));
 

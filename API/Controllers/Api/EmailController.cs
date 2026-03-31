@@ -47,6 +47,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
         [HttpGet("check/{domain}")]
         public async Task<IActionResult> GetEmailCheck(string domain, CancellationToken cancellationToken)
         {
+            // Support lightweight GET checks for Swagger, browser tests, and scripted demos.
             if (string.IsNullOrWhiteSpace(domain))
             {
                 _logger.LogWarning("Invalid domain parameter: {Domain}", domain);
