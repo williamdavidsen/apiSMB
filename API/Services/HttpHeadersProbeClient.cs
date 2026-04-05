@@ -9,7 +9,7 @@ namespace SecurityAssessmentAPI.Services
 
     public interface IHttpHeadersProbeClient
     {
-        Task<HttpHeadersProbeResult?> ProbeAsync(string domain, CancellationToken cancellationToken = default);
+        Task<HttpHeadersProbeResult?> ProbeAsync(string domain, string scheme = "https", CancellationToken cancellationToken = default);
     }
 
     public class HttpHeadersProbeClient : IHttpHeadersProbeClient
@@ -23,9 +23,9 @@ namespace SecurityAssessmentAPI.Services
             _logger = logger;
         }
 
-        public async Task<HttpHeadersProbeResult?> ProbeAsync(string domain, CancellationToken cancellationToken = default)
+        public async Task<HttpHeadersProbeResult?> ProbeAsync(string domain, string scheme = "https", CancellationToken cancellationToken = default)
         {
-            var targetUrl = $"https://{domain}";
+            var targetUrl = $"{scheme}://{domain}";
 
             try
             {

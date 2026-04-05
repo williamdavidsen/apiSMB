@@ -30,16 +30,42 @@ namespace SecurityAssessmentAPI.Services
             var normalizedDomain = NormalizeDomain(domain);
             // Combine a third-party benchmark with a live probe so missing Observatory data does not block scoring.
             var observatoryTask = _mozillaObservatoryClient.ScanAsync(normalizedDomain, cancellationToken);
-            var probeTask = _httpHeadersProbeClient.ProbeAsync(normalizedDomain, cancellationToken);
+            var httpsProbeTask = _httpHeadersProbeClient.ProbeAsync(normalizedDomain, Uri.UriSchemeHttps, cancellationToken);
 
-            await Task.WhenAll(observatoryTask, probeTask);
+            await Task.WhenAll(observatoryTask, httpsProbeTask);
 
             var observatory = await observatoryTask;
-            var probe = await probeTask;
+            var probe = await httpsProbeTask;
 
             if (probe == null)
             {
-                return CreateErrorResult(normalizedDomain, "The target could not be reached over HTTPS, so headers could not be analyzed.");
+                var httpProbe = await _httpHeadersProbeClient.ProbeAsync(normalizedDomain, Uri.UriSchemeHttp, cancellationToken);
+                if (httpProbe != null)
+                {
+                    if (string.Equals(httpProbe.FinalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var redirectedHttpsResult = BuildResult(normalizedDomain, httpProbe, observatory);
+                        redirectedHttpsResult.Alerts.Add(new HeadersAlert
+                        {
+                            Type = "INFO",
+                            Message = "The site was reachable via HTTP first and redirected to HTTPS before headers were evaluated."
+                        });
+
+                        _logger.LogInformation("Headers check completed after HTTP-to-HTTPS redirect: Domain={Domain}, Score={Score}, Status={Status}",
+                            redirectedHttpsResult.Domain, redirectedHttpsResult.OverallScore, redirectedHttpsResult.Status);
+
+                        return redirectedHttpsResult;
+                    }
+
+                    return CreateHttpOnlyFailResult(normalizedDomain, httpProbe);
+                }
+
+                return CreateErrorResult(normalizedDomain, "The target could not be reached over HTTPS or HTTP, so headers could not be analyzed.");
+            }
+
+            if (!string.Equals(probe.FinalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            {
+                return CreateHttpOnlyFailResult(normalizedDomain, probe);
             }
 
             var result = BuildResult(normalizedDomain, probe, observatory);
@@ -77,43 +103,13 @@ namespace SecurityAssessmentAPI.Services
             result.Criteria.MimeSniffingProtection = EvaluateMimeSniffingProtection(headers);
             result.Criteria.ReferrerPolicy = EvaluateReferrerPolicy(headers);
 
-            // Treat CSP and clickjacking protection as the core browser-side controls that drive the primary score.
+            // Keep the score aligned with the documented model: CSP (4), clickjacking protection (3), and HSTS (3).
             result.OverallScore =
+                result.Criteria.StrictTransportSecurity.Score +
                 result.Criteria.ContentSecurityPolicy.Score +
                 result.Criteria.ClickjackingProtection.Score;
 
-            // If both core protections are missing, but the site still shows some
-            // supportive header hygiene, avoid collapsing straight to zero.
-            if (result.OverallScore == 0)
-            {
-                var supportiveHeaderCount = 0;
-
-                if (headers.TryGetValue("Strict-Transport-Security", out _))
-                {
-                    supportiveHeaderCount++;
-                }
-
-                if (headers.TryGetValue("X-Content-Type-Options", out var xContentTypeOptions) &&
-                    xContentTypeOptions.Contains("nosniff", StringComparison.OrdinalIgnoreCase))
-                {
-                    supportiveHeaderCount++;
-                }
-
-                if (headers.TryGetValue("Referrer-Policy", out var referrerPolicy) &&
-                    (referrerPolicy.Contains("strict-origin-when-cross-origin", StringComparison.OrdinalIgnoreCase) ||
-                     referrerPolicy.Contains("no-referrer", StringComparison.OrdinalIgnoreCase) ||
-                     referrerPolicy.Contains("same-origin", StringComparison.OrdinalIgnoreCase)))
-                {
-                    supportiveHeaderCount++;
-                }
-
-                if (supportiveHeaderCount >= 2)
-                {
-                    result.OverallScore = 2;
-                }
-            }
-
-            result.Status = result.OverallScore >= 8 ? "PASS" : result.OverallScore >= 2 ? "WARNING" : "FAIL";
+            result.Status = result.OverallScore >= 8 ? "PASS" : result.OverallScore >= 4 ? "WARNING" : "FAIL";
 
             AddAlerts(result, headers, observatory, probe);
 
@@ -136,14 +132,14 @@ namespace SecurityAssessmentAPI.Services
             {
                 return new HeaderScoreDetail
                 {
-                    Score = 0,
+                    Score = 3,
                     Details = $"Strict-Transport-Security is configured: {value}"
                 };
             }
 
             return new HeaderScoreDetail
             {
-                Score = 0,
+                Score = 1,
                 Details = $"Strict-Transport-Security is present, but the policy may be weaker than recommended: {value}"
             };
         }
@@ -164,7 +160,7 @@ namespace SecurityAssessmentAPI.Services
             {
                 return new HeaderScoreDetail
                 {
-                    Score = 5,
+                    Score = 4,
                     Details = "Content-Security-Policy is present and does not include unsafe-inline or unsafe-eval."
                 };
             }
@@ -173,7 +169,7 @@ namespace SecurityAssessmentAPI.Services
 
             return new HeaderScoreDetail
             {
-                Score = 3,
+                Score = 2,
                 Details = $"Content-Security-Policy is present, but contains unsafe directives: {string.Join(", ", unsafeDirectives)}."
             };
         }
@@ -185,7 +181,7 @@ namespace SecurityAssessmentAPI.Services
             {
                 return new HeaderScoreDetail
                 {
-                    Score = 5,
+                    Score = 3,
                     Details = "Clickjacking protection is configured via CSP frame-ancestors."
                 };
             }
@@ -194,7 +190,7 @@ namespace SecurityAssessmentAPI.Services
             {
                 return new HeaderScoreDetail
                 {
-                    Score = 5,
+                    Score = 3,
                     Details = $"X-Frame-Options is present: {xfoValue}"
                 };
             }
@@ -213,7 +209,7 @@ namespace SecurityAssessmentAPI.Services
             {
                 return new HeaderScoreDetail
                 {
-                    Score = 5,
+                    Score = 0,
                     Details = $"X-Content-Type-Options is configured: {value}"
                 };
             }
@@ -242,14 +238,14 @@ namespace SecurityAssessmentAPI.Services
             {
                 return new HeaderScoreDetail
                 {
-                    Score = 5,
+                    Score = 0,
                     Details = $"Referrer-Policy is configured: {value}"
                 };
             }
 
             return new HeaderScoreDetail
             {
-                Score = 3,
+                Score = 0,
                 Details = $"Referrer-Policy is present, but may be weaker than recommended: {value}"
             };
         }
@@ -398,6 +394,24 @@ namespace SecurityAssessmentAPI.Services
                     {
                         Type = "CRITICAL_ALARM",
                         Message = message
+                    }
+                }
+            };
+        }
+
+        private static HeadersCheckResult CreateHttpOnlyFailResult(string domain, HttpHeadersProbeResult probe)
+        {
+            return new HeadersCheckResult
+            {
+                Domain = domain,
+                OverallScore = 0,
+                Status = "FAIL",
+                Alerts = new List<HeadersAlert>
+                {
+                    new HeadersAlert
+                    {
+                        Type = "CRITICAL_ALARM",
+                        Message = $"The target is not served over HTTPS. Final response: {probe.FinalUri}"
                     }
                 }
             };

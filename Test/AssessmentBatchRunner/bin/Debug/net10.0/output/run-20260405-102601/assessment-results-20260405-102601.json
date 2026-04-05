@@ -1,0 +1,268 @@
+[
+  {
+    "Domain": "neverssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 58,
+    "MaxScore": 100,
+    "Status": "PARTIAL",
+    "Grade": "E",
+    "EmailModuleIncluded": false,
+    "SslStatus": "PASS",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "INFO",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "http.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 52,
+    "MaxScore": 100,
+    "Status": "WARNING",
+    "Grade": "E",
+    "EmailModuleIncluded": false,
+    "SslStatus": "WARNING",
+    "HeadersStatus": "FAIL",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "UNKNOWN",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "WARNING",
+      "CRITICAL_WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "SSL/TLS analysis identified moderate weaknesses.",
+      "Important HTTP security header protections are missing."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "expired.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 38,
+    "MaxScore": 100,
+    "Status": "PARTIAL",
+    "Grade": "F",
+    "EmailModuleIncluded": false,
+    "SslStatus": "FAIL",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "UNKNOWN",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "CRITICAL_ALARM",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "Critical SSL/TLS findings were detected and heavily affect the final assessment.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "self-signed.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 60,
+    "MaxScore": 100,
+    "Status": "PARTIAL",
+    "Grade": "D",
+    "EmailModuleIncluded": false,
+    "SslStatus": "PASS",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "INFO",
+    "PqcReadinessLevel": "Not supported",
+    "AlertTypes": [
+      "INFO",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "wrong.host.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 52,
+    "MaxScore": 100,
+    "Status": "PARTIAL",
+    "Grade": "E",
+    "EmailModuleIncluded": false,
+    "SslStatus": "WARNING",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "UNKNOWN",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "WARNING",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "SSL/TLS analysis identified moderate weaknesses.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "untrusted-root.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 55,
+    "MaxScore": 100,
+    "Status": "PARTIAL",
+    "Grade": "E",
+    "EmailModuleIncluded": false,
+    "SslStatus": "WARNING",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "UNKNOWN",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "WARNING",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "SSL/TLS analysis identified moderate weaknesses.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "rc4.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 15,
+    "MaxScore": 100,
+    "Status": "PARTIAL",
+    "Grade": "F",
+    "EmailModuleIncluded": false,
+    "SslStatus": "ERROR",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "UNKNOWN",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "WARNING",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "SSL/TLS analysis could not be completed reliably. The final assessment is therefore partial.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "3des.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 15,
+    "MaxScore": 100,
+    "Status": "PARTIAL",
+    "Grade": "F",
+    "EmailModuleIncluded": false,
+    "SslStatus": "ERROR",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "UNKNOWN",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "WARNING",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "SSL/TLS analysis could not be completed reliably. The final assessment is therefore partial.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "sha1-intermediate.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 15,
+    "MaxScore": 100,
+    "Status": "FAIL",
+    "Grade": "F",
+    "EmailModuleIncluded": false,
+    "SslStatus": "FAIL",
+    "HeadersStatus": "ERROR",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "INFO",
+    "PqcReadinessLevel": "Not supported",
+    "AlertTypes": [
+      "INFO",
+      "CRITICAL_ALARM",
+      "WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "Critical SSL/TLS findings were detected and heavily affect the final assessment.",
+      "HTTP security header analysis could not be completed reliably."
+    ],
+    "Error": null
+  },
+  {
+    "Domain": "mixed-script.badssl.com",
+    "RequestSucceeded": true,
+    "HttpStatusCode": 200,
+    "OverallScore": 52,
+    "MaxScore": 100,
+    "Status": "WARNING",
+    "Grade": "E",
+    "EmailModuleIncluded": false,
+    "SslStatus": "WARNING",
+    "HeadersStatus": "FAIL",
+    "EmailStatus": "NOT_APPLICABLE",
+    "ReputationStatus": "PASS",
+    "PqcStatus": "UNKNOWN",
+    "PqcReadinessLevel": "Unknown / not verifiable",
+    "AlertTypes": [
+      "INFO",
+      "WARNING",
+      "CRITICAL_WARNING"
+    ],
+    "AlertMessages": [
+      "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model.",
+      "SSL/TLS analysis identified moderate weaknesses.",
+      "Important HTTP security header protections are missing."
+    ],
+    "Error": null
+  }
+]
