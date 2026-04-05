@@ -15,6 +15,7 @@ namespace SecurityAssessmentAPI.Services
     public class SslCheckingService : ISslCheckingService
     {
         private const int SslLabsMaxAttempts = 8;
+        private const int ShortLivedCertificateMaxDays = 120;
         private static readonly TimeSpan SslLabsPollDelay = TimeSpan.FromSeconds(3);
 
         private readonly ISslLabsClient _sslLabsClient;
@@ -119,15 +120,17 @@ namespace SecurityAssessmentAPI.Services
                 return await FallbackToDirectTlsOrErrorAsync(domain, sslLabsStatus, cancellationToken, originalException);
             }
 
-            var record = hardenizeResponse.Records.First();
+            var record = SelectPrimaryHardenizeRecord(hardenizeResponse.Records, DateTimeOffset.Now);
             var now = DateTimeOffset.Now;
             var validFrom = record.valid_from.HasValue ? DateTimeOffset.FromUnixTimeSeconds(record.valid_from.Value) : now;
             var validTo = record.valid_until.HasValue ? DateTimeOffset.FromUnixTimeSeconds(record.valid_until.Value) : now;
             var remainingDays = (validTo - now).TotalDays;
+            var totalValidityDays = (validTo - validFrom).TotalDays;
+            var renewalVerified = IsHardenizeRenewalVerified(record, hardenizeResponse.Records, validTo);
 
             var certificateValidity = validFrom <= now && remainingDays > 0;
             var tlsScore = 7;
-            var validDaysScore = remainingDays > 365 ? 6 : remainingDays > 180 ? 4 : remainingDays > 30 ? 2 : 0;
+            var validDaysScore = CalculateRemainingLifetimeScore(validFrom, validTo);
             var cipherScore = 6;
 
             var overall = tlsScore + (certificateValidity ? 4 : 0) + validDaysScore + cipherScore;
@@ -149,7 +152,7 @@ namespace SecurityAssessmentAPI.Services
                     RemainingLifetime = new SslScoreDetail
                     {
                         Score = validDaysScore,
-                        Details = validDaysScore > 0 ? $"Remaining lifetime: {remainingDays:F0} days" : "The certificate has expired or its lifetime is unknown."
+                        Details = GetRemainingLifetimeDetails(validFrom, validTo, remainingDays, totalValidityDays)
                     },
                     CipherStrength = new SslScoreDetail { Score = cipherScore, Details = "A default cipher score was used because cipher data was limited." }
                 },
@@ -160,14 +163,37 @@ namespace SecurityAssessmentAPI.Services
             {
                 result.Alerts.Add(new SslAlert { Type = "CRITICAL_ALARM", Message = "The certificate is invalid or expired (Hardenize)." });
             }
-            else if (remainingDays < 30)
+            else
             {
-                result.Alerts.Add(new SslAlert
+                if (remainingDays < 30 && !renewalVerified)
                 {
-                    Type = "CRITICAL_WARNING",
-                    Message = "The certificate will expire very soon (Hardenize).",
-                    ExpiryDate = validTo.DateTime
-                });
+                    result.Alerts.Add(new SslAlert
+                    {
+                        Type = "CRITICAL_WARNING",
+                        Message = "The certificate is approaching expiry and renewal has not been verified (Hardenize).",
+                        ExpiryDate = validTo.DateTime
+                    });
+                }
+
+                if (remainingDays < 7 && !renewalVerified)
+                {
+                    result.Alerts.Add(new SslAlert
+                    {
+                        Type = "CRITICAL_ALARM",
+                        Message = "The certificate will expire very soon and renewal is not verified (Hardenize).",
+                        ExpiryDate = validTo.DateTime
+                    });
+                }
+
+                if (remainingDays < 30 && renewalVerified)
+                {
+                    result.Alerts.Add(new SslAlert
+                    {
+                        Type = "INFO",
+                        Message = "The certificate is close to expiry, but a replacement certificate appears to be provisioned (Hardenize).",
+                        ExpiryDate = validTo.DateTime
+                    });
+                }
             }
 
             _logger.LogInformation("SSL check completed (Hardenize): Domain={Domain}, Score={Score}, Status={Status}", domain, result.OverallScore, result.Status);
@@ -209,6 +235,7 @@ namespace SecurityAssessmentAPI.Services
                 var notBefore = new DateTimeOffset(certificate.NotBefore.ToUniversalTime());
                 var notAfter = new DateTimeOffset(certificate.NotAfter.ToUniversalTime());
                 var remainingDays = (notAfter - now).TotalDays;
+                var totalValidityDays = (notAfter - notBefore).TotalDays;
 
                 var tlsScore = CalculateTlsScoreFromProtocol(sslStream.SslProtocol);
                 var certificateValidityScore = notBefore <= now && notAfter > now ? 4 : 0;
@@ -243,7 +270,7 @@ namespace SecurityAssessmentAPI.Services
                         RemainingLifetime = new SslScoreDetail
                         {
                             Score = remainingLifetimeScore,
-                            Details = $"The certificate will expire in {remainingDays:F0} days."
+                            Details = GetRemainingLifetimeDetails(notBefore, notAfter, remainingDays, totalValidityDays)
                         },
                         CipherStrength = new SslScoreDetail
                         {
@@ -268,14 +295,29 @@ namespace SecurityAssessmentAPI.Services
                         Message = "The certificate is invalid or expired."
                     });
                 }
-                else if (remainingDays < 30)
+                else
                 {
-                    result.Alerts.Add(new SslAlert
+                    const bool renewalVerified = false;
+
+                    if (remainingDays < 30 && !renewalVerified)
                     {
-                        Type = "CRITICAL_WARNING",
-                        Message = "The certificate will expire soon.",
-                        ExpiryDate = notAfter.DateTime
-                    });
+                        result.Alerts.Add(new SslAlert
+                        {
+                            Type = "CRITICAL_WARNING",
+                            Message = "The certificate is approaching expiry and renewal has not been verified.",
+                            ExpiryDate = notAfter.DateTime
+                        });
+                    }
+
+                    if (remainingDays < 7 && !renewalVerified)
+                    {
+                        result.Alerts.Add(new SslAlert
+                        {
+                            Type = "CRITICAL_ALARM",
+                            Message = "The certificate will expire very soon and renewal is not verified.",
+                            ExpiryDate = notAfter.DateTime
+                        });
+                    }
                 }
 
                 _logger.LogInformation("SSL check completed (direct TLS probe): Domain={Domain}, Score={Score}, Status={Status}", domain, result.OverallScore, result.Status);
@@ -353,7 +395,7 @@ namespace SecurityAssessmentAPI.Services
             result.Criteria.RemainingLifetime.Details = GetRemainingLifetimeDetails(cert);
             result.Criteria.CipherStrength.Details = GetCipherDetails(suites);
 
-            AddAlerts(result, cert);
+            AddAlerts(result, cert, response.Certs);
 
             if (!IsHttpsSupported(protocols))
             {
@@ -415,8 +457,27 @@ namespace SecurityAssessmentAPI.Services
 
         private string GetRemainingLifetimeDetails(SslLabsCert cert)
         {
-            var remainingDays = (DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter) - DateTimeOffset.Now).TotalDays;
-            return $"The certificate will expire in {remainingDays:F0} days.";
+            var notBefore = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotBefore);
+            var notAfter = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter);
+            var remainingDays = (notAfter - DateTimeOffset.Now).TotalDays;
+            var totalValidityDays = (notAfter - notBefore).TotalDays;
+
+            return GetRemainingLifetimeDetails(notBefore, notAfter, remainingDays, totalValidityDays);
+        }
+
+        private string GetRemainingLifetimeDetails(DateTimeOffset notBefore, DateTimeOffset notAfter, double remainingDays, double totalValidityDays)
+        {
+            if (totalValidityDays <= 0)
+            {
+                return "The certificate lifetime could not be determined.";
+            }
+
+            if (!IsShortLivedCertificate(totalValidityDays))
+            {
+                return $"Long-lived certificate detected ({totalValidityDays:F0} days total lifetime). Short-lived lifetime scoring does not apply.";
+            }
+
+            return $"Short-lived certificate: {remainingDays:F0} days remaining out of {totalValidityDays:F0} days total lifetime.";
         }
 
         private string GetCipherDetails(List<SslLabsSuite> suites)
@@ -435,29 +496,134 @@ namespace SecurityAssessmentAPI.Services
             return $"Strong ciphers: {string.Join(", ", strongCiphers)}";
         }
 
-        private void AddAlerts(SslCheckResult result, SslLabsCert cert)
+        private void AddAlerts(SslCheckResult result, SslLabsCert cert, List<SslLabsCert> allCerts)
         {
             var remainingDays = (DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter) - DateTimeOffset.Now).TotalDays;
+            var renewalVerified = IsSslLabsRenewalVerified(cert, allCerts);
 
-            if (remainingDays < 30)
+            if (remainingDays < 30 && !renewalVerified)
             {
                 result.Alerts.Add(new SslAlert
                 {
                     Type = "CRITICAL_WARNING",
-                    Message = "The certificate will expire soon.",
+                    Message = "The certificate is approaching expiry and renewal has not been verified.",
                     ExpiryDate = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter).DateTime
                 });
             }
 
-            if (remainingDays < 7)
+            if (remainingDays < 7 && !renewalVerified)
             {
                 result.Alerts.Add(new SslAlert
                 {
                     Type = "CRITICAL_ALARM",
-                    Message = "The certificate will expire very soon and must be renewed.",
+                    Message = "The certificate will expire very soon and renewal is not verified.",
                     ExpiryDate = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter).DateTime
                 });
             }
+
+            if (remainingDays < 30 && renewalVerified)
+            {
+                result.Alerts.Add(new SslAlert
+                {
+                    Type = "INFO",
+                    Message = "The certificate is close to expiry, but a replacement certificate appears to be provisioned.",
+                    ExpiryDate = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter).DateTime
+                });
+            }
+        }
+
+        private static HardenizeCertificateRecord SelectPrimaryHardenizeRecord(List<HardenizeCertificateRecord> records, DateTimeOffset now)
+        {
+            var active = records
+                .Where(record => record.valid_from.HasValue && record.valid_until.HasValue)
+                .Where(record => DateTimeOffset.FromUnixTimeSeconds(record.valid_from!.Value) <= now &&
+                                 DateTimeOffset.FromUnixTimeSeconds(record.valid_until!.Value) > now)
+                .OrderBy(record => record.valid_until)
+                .FirstOrDefault();
+
+            if (active != null)
+            {
+                return active;
+            }
+
+            return records
+                .Where(record => record.valid_from.HasValue && record.valid_until.HasValue)
+                .OrderByDescending(record => record.valid_until)
+                .First();
+        }
+
+        private static bool IsHardenizeRenewalVerified(HardenizeCertificateRecord current, List<HardenizeCertificateRecord> records, DateTimeOffset currentNotAfter)
+        {
+            var replacementWindowEnd = currentNotAfter.AddDays(14);
+            var currentSubject = current.subject ?? string.Empty;
+
+            return records
+                .Where(record => record.valid_from.HasValue && record.valid_until.HasValue)
+                .Select(record => new
+                {
+                    ValidFrom = DateTimeOffset.FromUnixTimeSeconds(record.valid_from!.Value),
+                    ValidUntil = DateTimeOffset.FromUnixTimeSeconds(record.valid_until!.Value),
+                    Subject = record.subject ?? string.Empty
+                })
+                .Any(candidate =>
+                    candidate.ValidUntil > currentNotAfter &&
+                    candidate.ValidFrom <= replacementWindowEnd &&
+                    SubjectLooksRelated(currentSubject, candidate.Subject));
+        }
+
+        private static bool IsSslLabsRenewalVerified(SslLabsCert current, List<SslLabsCert> allCerts)
+        {
+            if (allCerts.Count <= 1)
+            {
+                return false;
+            }
+
+            var currentNotAfter = DateTimeOffset.FromUnixTimeMilliseconds(current.NotAfter);
+            var replacementWindowEnd = currentNotAfter.AddDays(14);
+            var currentNames = GetCertificateNames(current);
+
+            return allCerts.Any(candidate =>
+            {
+                if (ReferenceEquals(candidate, current))
+                {
+                    return false;
+                }
+
+                var candidateNotBefore = DateTimeOffset.FromUnixTimeMilliseconds(candidate.NotBefore);
+                var candidateNotAfter = DateTimeOffset.FromUnixTimeMilliseconds(candidate.NotAfter);
+
+                if (candidateNotAfter <= currentNotAfter || candidateNotBefore > replacementWindowEnd)
+                {
+                    return false;
+                }
+
+                var candidateNames = GetCertificateNames(candidate);
+                if (currentNames.Count > 0 && candidateNames.Count > 0)
+                {
+                    return currentNames.Overlaps(candidateNames);
+                }
+
+                return SubjectLooksRelated(current.Subject, candidate.Subject);
+            });
+        }
+
+        private static HashSet<string> GetCertificateNames(SslLabsCert cert)
+        {
+            return cert.CommonNames
+                .Concat(cert.AltNames)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name.Trim().ToLowerInvariant())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static bool SubjectLooksRelated(string? left, string? right)
+        {
+            if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+            {
+                return false;
+            }
+
+            return string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsReadyStatus(string? status) =>
@@ -493,6 +659,12 @@ namespace SecurityAssessmentAPI.Services
                 return 0;
             }
 
+            // Report alignment: remaining lifetime scoring applies only to short-lived certificates.
+            if (!IsShortLivedCertificate(totalDays))
+            {
+                return 6;
+            }
+
             var percentage = (remainingDays / totalDays) * 100;
 
             if (percentage > 90) return 6;
@@ -500,6 +672,9 @@ namespace SecurityAssessmentAPI.Services
             if (percentage > 10) return 2;
             return 0;
         }
+
+        private static bool IsShortLivedCertificate(double totalValidityDays) =>
+            totalValidityDays > 0 && totalValidityDays <= ShortLivedCertificateMaxDays;
 
         private static int CalculateTlsScoreFromProtocol(SslProtocols protocol) =>
             protocol switch
