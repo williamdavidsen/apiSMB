@@ -1,1 +1,12 @@
+# Local app settings
 API/appsettings.Local.json
+
+# Build artifacts
+**/bin/
+**/obj/
+
+# Local .NET CLI cache generated in repo root
+.dotnet/
+
+# Test runner output artifacts
+Test/AssessmentBatchRunner/output/
