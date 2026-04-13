@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Security dashboard favicon">
+  <defs>
+    <linearGradient id="shieldBg" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00bcd4" />
+      <stop offset="1" stop-color="#007b88" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0a2632" />
+  <path
+    d="M32 8l18 7v14c0 13.6-8.4 22-18 27-9.6-5-18-13.4-18-27V15l18-7z"
+    fill="url(#shieldBg)"
+  />
+  <circle cx="30" cy="30" r="8.2" fill="#e8fbff" />
+  <circle cx="30" cy="30" r="5.3" fill="#00a6ba" />
+  <path
+    d="M36.2 36.2l6.8 6.8"
+    stroke="#e8fbff"
+    stroke-width="4.2"
+    stroke-linecap="round"
+  />
+  <circle cx="46.5" cy="46.5" r="2.1" fill="#e8fbff" />
+</svg>

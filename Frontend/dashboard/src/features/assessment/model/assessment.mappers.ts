@@ -1,0 +1,369 @@
+﻿import { gradeFromPercent, modulePercent } from '../../../shared/lib/score'
+import type { AssessmentDashboardBundle, HeadersObservatorySummary } from './assessment.types'
+import type { DashboardModuleKey } from './assessment.types'
+
+export type ExecutiveBanner = {
+  title: string
+  body: string
+  severity: 'critical' | 'warning' | 'info'
+}
+
+const alertPriority: Record<string, number> = {
+  CRITICAL_ALARM: 0,
+  CRITICAL_WARNING: 1,
+  WARNING: 2,
+  INFO: 3,
+}
+
+function alertRank(type: string): number {
+  const key = type.trim().toUpperCase()
+  return alertPriority[key] ?? 9
+}
+
+export function pickExecutiveBanner(bundle: AssessmentDashboardBundle): ExecutiveBanner | null {
+  const ranked = [...bundle.assessment.alerts].sort((a, b) => alertRank(a.type) - alertRank(b.type))
+  const top = ranked[0]
+  if (!top) return null
+
+  const severity =
+    alertRank(top.type) <= 1 ? 'critical' : alertRank(top.type) === 2 ? 'warning' : 'info'
+
+  const title = inferBannerTitle(bundle, top.type)
+  return { title, body: top.message, severity }
+}
+
+function inferBannerTitle(bundle: AssessmentDashboardBundle, topType: string): string {
+  const type = topType.trim().toUpperCase()
+  if (type === 'CRITICAL_ALARM' || type === 'CRITICAL_WARNING') {
+    if (bundle.ssl.alerts.some((a) => a.type.toUpperCase().includes('CRITICAL'))) {
+      return 'HTTPS / certificate risk'
+    }
+  }
+
+  if (bundle.ssl.status.toUpperCase() === 'FAIL' && bundle.ssl.overallScore === 0) {
+    return 'HTTPS / certificate risk'
+  }
+
+  if (topType.toUpperCase().includes('HEADER') || bundle.headers.status.toUpperCase() === 'FAIL') {
+    return 'HTTP security headers'
+  }
+
+  if (topType.toUpperCase().includes('EMAIL')) {
+    return 'E-mail authentication'
+  }
+
+  if (topType.toUpperCase().includes('REPUTATION')) {
+    return 'Domain / IP reputation'
+  }
+
+  return 'Assessment summary'
+}
+
+export function dashboardHeadline(grade: string, status: string, score: number): string {
+  const g = grade.trim().toUpperCase()
+  const s = status.trim().toUpperCase()
+
+  if (score <= 0 || g === 'F' || (s === 'FAIL' && score < 50)) {
+    return 'Critical security failure'
+  }
+
+  if (s === 'FAIL' || g === 'E' || g === 'D') {
+    return 'Security improvements needed'
+  }
+
+  if (s === 'WARNING' || g === 'C') {
+    return 'Security posture needs attention'
+  }
+
+  if (s === 'PARTIAL') {
+    return 'Partial security assessment'
+  }
+
+  return 'Security analysis dashboard'
+}
+
+export function dashboardEmailSubtitle(emailModuleIncluded: boolean): string {
+  return emailModuleIncluded
+    ? '(E-mail security evaluated from DNS records)'
+    : '(E-mail security not evaluated)'
+}
+
+export function formatHeaderPresence(detail: { score: number; details: string }): string {
+  if (detail.score <= 0) return 'Missing'
+  return 'Present'
+}
+
+export function formatEmailPresence(detail: { score: number }): string {
+  if (detail.score <= 0) return 'Missing'
+  return 'Detected'
+}
+
+export function reputationVerdict(status: string, _suspicious: number, malicious: number): string {
+  const key = status.trim().toUpperCase()
+  if (key === 'ERROR') return 'Unknown'
+  if (malicious > 0) return 'Malicious signals'
+  if (key === 'FAIL') return 'Suspicious'
+  if (key === 'WARNING') return 'Mixed signals'
+  if (key === 'PASS') return 'Clean'
+  return status || 'Unknown'
+}
+
+/** Row highlight for chips (driven by API-mapped labels/values in `buildModuleCards`). */
+export type ModuleFactTone = 'success' | 'warning' | 'error' | 'neutral'
+
+export type ModuleCardFact = {
+  label: string
+  value: string
+  tone: ModuleFactTone
+}
+
+export type ModuleCardView = {
+  key: DashboardModuleKey
+  title: string
+  moduleGrade: string
+  /** Raw module status from the API (SSL/Headers/Email/Reputation). */
+  moduleApiStatus: string
+  /** Filled portion of the module score bar (API rawScore / rawMaxScore). */
+  scoreFill?: { current: number; max: number }
+  /** Extra context above the score bar (e.g. Observatory). Omit when the only text would repeat the module score. */
+  statusLine?: string
+  facts: ModuleCardFact[]
+  bullet?: string
+  callout?: { message: string; tone: 'critical' | 'warning' | 'info' }
+}
+
+/** Avoid grey bullet + colored callout showing the same API line. */
+function hideBulletIfSameAsCallout(
+  bulletWithPrefix: string | undefined,
+  calloutMessage: string | undefined,
+): string | undefined {
+  if (!bulletWithPrefix || !calloutMessage?.trim()) return bulletWithPrefix
+  const body = bulletWithPrefix.replace(/^\s*•\s*/u, '').trim()
+  if (body === calloutMessage.trim()) return undefined
+  return bulletWithPrefix
+}
+
+function toneTlsStatus(status: string): ModuleFactTone {
+  const u = status.trim().toUpperCase()
+  if (u === 'PASS') return 'success'
+  if (u === 'WARNING') return 'warning'
+  if (u === 'FAIL') return 'error'
+  if (u === 'ERROR') return 'neutral'
+  return 'neutral'
+}
+
+function toneHeaderPresence(value: string): ModuleFactTone {
+  if (value === 'Missing') return 'error'
+  if (value === 'Present') return 'success'
+  return 'neutral'
+}
+
+function toneRisk(value: string): ModuleFactTone {
+  if (value === 'High') return 'error'
+  if (value === 'Moderate') return 'warning'
+  if (value === 'Low') return 'success'
+  return 'neutral'
+}
+
+function toneEmailRow(value: string): ModuleFactTone {
+  if (value === 'Missing') return 'error'
+  if (value === 'Detected') return 'success'
+  if (value === 'Not evaluated') return 'neutral'
+  return 'neutral'
+}
+
+function toneReputationVerdict(value: string): ModuleFactTone {
+  if (value === 'Unknown') return 'warning'
+  if (value === 'Clean') return 'success'
+  if (value === 'Suspicious' || value.includes('Malicious')) return 'error'
+  if (value === 'Mixed signals') return 'warning'
+  return 'neutral'
+}
+
+function formatObservatoryStatusLine(observatory: HeadersObservatorySummary): string {
+  const grade = observatory.grade && observatory.grade !== 'UNAVAILABLE' ? observatory.grade : 'N/A'
+
+  if (observatory.testsQuantity > 0) {
+    return `Observatory: grade ${grade}, score ${observatory.score}/100, passed ${observatory.testsPassed}/${observatory.testsQuantity}`
+  }
+
+  if (observatory.score > 0) {
+    return `Observatory: grade ${grade}, score ${observatory.score}/100`
+  }
+
+  return 'Observatory: data not available for this scan'
+}
+export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardView[] {
+  const { assessment, ssl, headers, email, reputation } = bundle
+
+  const sslPercent = modulePercent(ssl.overallScore, ssl.maxScore)
+  const sslGrade = gradeFromPercent(sslPercent)
+
+  const sslBullet =
+    ssl.criteria.remainingLifetime.details ||
+    ssl.alerts[0]?.message ||
+    ssl.criteria.certificateValidity.details
+
+  const sslCallout =
+    ssl.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL')) ??
+    ssl.alerts.find((a) => a.type.toUpperCase().includes('WARNING'))
+
+  const headersRisk =
+    headers.status.toUpperCase() === 'ERROR'
+      ? 'Unknown'
+      : headers.status.toUpperCase() === 'PASS'
+        ? 'Low'
+        : headers.status.toUpperCase() === 'WARNING'
+          ? 'Moderate'
+          : 'High'
+
+  const observatoryGrade =
+    headers.observatory.grade && headers.observatory.grade !== 'UNAVAILABLE'
+      ? headers.observatory.grade
+      : gradeFromPercent(modulePercent(headers.overallScore, headers.maxScore))
+
+  const headersBullet =
+    headers.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))?.message ||
+    headers.alerts[0]?.message ||
+    headers.criteria.strictTransportSecurity.details
+
+  const headersCallout = headers.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
+
+  const emailIncluded = assessment.emailModuleIncluded
+
+  const emailFacts: ModuleCardFact[] = emailIncluded
+    ? [
+        {
+          label: 'SPF',
+          value: formatEmailPresence(email.criteria.spfVerification),
+          tone: toneEmailRow(formatEmailPresence(email.criteria.spfVerification)),
+        },
+        {
+          label: 'DKIM',
+          value: formatEmailPresence(email.criteria.dkimActivated),
+          tone: toneEmailRow(formatEmailPresence(email.criteria.dkimActivated)),
+        },
+        {
+          label: 'DMARC',
+          value: formatEmailPresence(email.criteria.dmarcEnforcement),
+          tone: toneEmailRow(formatEmailPresence(email.criteria.dmarcEnforcement)),
+        },
+      ]
+    : [
+        { label: 'SPF', value: 'Not evaluated', tone: 'neutral' },
+        { label: 'DKIM', value: 'Not evaluated', tone: 'neutral' },
+        { label: 'DMARC', value: 'Not evaluated', tone: 'neutral' },
+      ]
+
+  const emailBullet = emailIncluded
+    ? email.alerts[0]?.message || email.criteria.spfVerification.details
+    : 'No MX records were found for this hostname, so e-mail authentication was not scored.'
+
+  const emailCallout = emailIncluded
+    ? email.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
+    : undefined
+
+  const repVerdict = reputationVerdict(
+    reputation.status,
+    reputation.summary.suspiciousDetections,
+    reputation.summary.maliciousDetections,
+  )
+
+  const repBullet =
+    reputation.criteria.blacklistStatus.details ||
+    reputation.alerts[0]?.message ||
+    `Sampled detections: malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}.`
+
+  const repCallout = reputation.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
+
+  const hstsVal = formatHeaderPresence(headers.criteria.strictTransportSecurity)
+  const cspVal = formatHeaderPresence(headers.criteria.contentSecurityPolicy)
+
+  const emailNotInFinalScoreMessage =
+    'E-mail authentication was not included in the final weighted score.'
+
+  const cards: ModuleCardView[] = [
+    {
+      key: 'ssl-tls',
+      title: 'TLS / SSL',
+      moduleGrade: sslGrade,
+      moduleApiStatus: ssl.status,
+      scoreFill: { current: ssl.overallScore, max: ssl.maxScore },
+      facts: [{ label: 'TLS status', value: ssl.status, tone: toneTlsStatus(ssl.status) }],
+      bullet: hideBulletIfSameAsCallout(
+        sslBullet ? `• ${sslBullet}` : undefined,
+        sslCallout?.message,
+      ),
+      callout: sslCallout
+        ? {
+            message: sslCallout.message,
+            tone: sslCallout.type.toUpperCase().includes('CRITICAL') ? 'critical' : 'warning',
+          }
+        : undefined,
+    },
+    {
+      key: 'http-headers',
+      title: 'HTTP Headers',
+      moduleGrade: observatoryGrade,
+      moduleApiStatus: headers.status,
+      scoreFill: { current: headers.overallScore, max: headers.maxScore },
+      statusLine: formatObservatoryStatusLine(headers.observatory),
+      facts: [
+        { label: 'HSTS', value: hstsVal, tone: toneHeaderPresence(hstsVal) },
+        { label: 'CSP', value: cspVal, tone: toneHeaderPresence(cspVal) },
+        { label: 'Risk', value: headersRisk, tone: toneRisk(headersRisk) },
+      ],
+      bullet: hideBulletIfSameAsCallout(
+        headersBullet ? `• ${headersBullet}` : undefined,
+        headersCallout?.message,
+      ),
+      callout: headersCallout
+        ? { message: headersCallout.message, tone: 'critical' }
+        : undefined,
+    },
+    {
+      key: 'email',
+      title: 'E-mail',
+      moduleGrade: emailIncluded ? gradeFromPercent(modulePercent(email.overallScore, email.maxScore)) : '—',
+      moduleApiStatus: email.status,
+      scoreFill: emailIncluded ? { current: email.overallScore, max: email.maxScore } : undefined,
+      statusLine: emailIncluded ? undefined : 'Not evaluated',
+      facts: emailFacts,
+      bullet: hideBulletIfSameAsCallout(
+        emailBullet ? `• ${emailBullet}` : undefined,
+        emailIncluded ? emailCallout?.message : emailNotInFinalScoreMessage,
+      ),
+      callout: emailCallout
+        ? { message: emailCallout.message, tone: 'critical' }
+        : emailIncluded
+          ? undefined
+          : { message: emailNotInFinalScoreMessage, tone: 'info' },
+    },
+    {
+      key: 'reputation',
+      title: 'Domain / IP reputation',
+      moduleGrade: gradeFromPercent(modulePercent(reputation.overallScore, reputation.maxScore)),
+      moduleApiStatus: reputation.status,
+      scoreFill: { current: reputation.overallScore, max: reputation.maxScore },
+      facts: [
+        { label: 'Verdict', value: repVerdict, tone: toneReputationVerdict(repVerdict) },
+        {
+          label: 'Signals',
+          value: `malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}`,
+          tone: 'neutral',
+        },
+      ],
+      bullet: hideBulletIfSameAsCallout(
+        repBullet ? `• ${repBullet}` : undefined,
+        repCallout?.message,
+      ),
+      callout: repCallout
+        ? { message: repCallout.message, tone: 'critical' }
+        : undefined,
+    },
+  ]
+
+  return cards
+}
+
+
