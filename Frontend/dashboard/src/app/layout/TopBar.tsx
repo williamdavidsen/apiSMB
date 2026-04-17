@@ -1,6 +1,8 @@
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import HomeOutlined from '@mui/icons-material/HomeOutlined'
+import MenuOutlined from '@mui/icons-material/MenuOutlined'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { Link as RouterLink } from 'react-router-dom'
@@ -30,16 +32,25 @@ export function TopBar({ title, onOpenNav }: TopBarProps) {
           sx={{ mr: 1, color: 'primary.contrastText', minWidth: 40, display: { md: 'inline-flex', lg: 'none' } }}
           aria-label="Open navigation menu"
         >
-          ☰
+          <MenuOutlined sx={{ fontSize: 24 }} />
         </Button>
 
         <Button
           component={RouterLink}
           to={routes.home}
-          sx={{ color: 'primary.contrastText', minWidth: 0, px: 1.2 }}
+          startIcon={<HomeOutlined sx={{ fontSize: 22 }} />}
+          sx={{
+            color: 'primary.contrastText',
+            minWidth: 0,
+            px: 1.3,
+            fontWeight: 700,
+            '& .MuiButton-startIcon': {
+              mr: 0.65,
+            },
+          }}
           aria-label="Go to home page"
         >
-          ⌂ Home
+          Home
         </Button>
 
         <Box sx={{ flex: 1, textAlign: 'center', pr: { xs: 0, md: 7 } }}>
