@@ -18,6 +18,10 @@ coverage.*
 
 # Local .NET SDK/CLI cache (created when DOTNET_CLI_HOME points to repo)
 .dotnet/
+.dotnet-cli-home/
+
+# Node dependencies
+**/node_modules/
 
 # ------------------------------
 # IDE and editor artifacts
@@ -56,3 +60,5 @@ Desktop.ini
 # Test runner output artifacts
 # ------------------------------
 Test/AssessmentBatchRunner/output/
+**/test-results/
+**/playwright-report/

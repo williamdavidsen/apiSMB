@@ -1,10 +1,2 @@
-neverssl.com
-http.badssl.com
-expired.badssl.com
-self-signed.badssl.com
-wrong.host.badssl.com
-untrusted-root.badssl.com
-rc4.badssl.com
-3des.badssl.com
-sha1-intermediate.badssl.com
-mixed-script.badssl.com
+# Add approved weak or intentionally vulnerable domains here for manual/batch validation.
+# Do not add domains unless the group is allowed to test them.
