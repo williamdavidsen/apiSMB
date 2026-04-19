@@ -1,2 +1,52 @@
-# Add approved weak or intentionally vulnerable domains here for manual/batch validation.
-# Do not add domains unless the group is allowed to test them.
+# Reserved fake domains for negative/batch validation.
+# These are not intended to represent real companies or real phishing sites.
+empty.invalid
+missing.invalid
+no-such-domain.invalid
+security-check.invalid
+headers-missing.invalid
+ssl-expired.invalid
+ssl-self-signed.invalid
+mail-missing.invalid
+mx-missing.invalid
+reputation-unknown.invalid
+provider-timeout.invalid
+provider-error.invalid
+http-only.invalid
+redirect-loop.invalid
+bad-certificate.invalid
+weak-cipher.invalid
+old-tls.invalid
+no-csp.invalid
+no-hsts.invalid
+no-dmarc.invalid
+no-spf.invalid
+no-dkim.invalid
+malware-signal.invalid
+suspicious-signal.invalid
+pqc-unknown.invalid
+pqc-detected.invalid
+example-company.test
+demo-customer.test
+smb-customer.test
+internal-portal.test
+customer-login.test
+mail-gateway.test
+legacy-server.test
+staging-system.test
+dev-environment.test
+api-service.test
+broken-api.test
+slow-response.test
+dns-timeout.test
+unknown-host.test
+domain-without-email.example
+domain-with-email.example
+strong-security.example
+weak-security.example
+partial-result.example
+all-modules-pass.example
+all-modules-fail.example
+headers-warning.example
+email-warning.example
+reputation-warning.example

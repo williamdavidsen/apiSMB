@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-var apiBaseUrl = args.Length > 0 ? args[0].TrimEnd('/') : "http://localhost:5198";
+var apiBaseUrl = args.Length > 0 ? args[0].TrimEnd('/') : "http://localhost:5555";
 var domainFile = args.Length > 1 ? args[1] : "domains.txt";
 
 if (!File.Exists(domainFile))

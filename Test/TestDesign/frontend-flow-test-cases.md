@@ -5,7 +5,7 @@
 - Requirement: REQ-001
 - Technique: Equivalence partitioning
 - Input class: valid domain
-- Examples: `example.com`, `firma.no`, `sub.example.com`
+- Examples: `oslomet.no`, `vy.no`, `uio.no`, `amazon.com`, `wikipedia.org`, `student.oslomet.no`
 - Expected: Domain is accepted and scan navigation starts.
 
 ## TC-FE-002
@@ -13,7 +13,7 @@
 - Requirement: REQ-002
 - Technique: Equivalence partitioning
 - Input class: invalid domain
-- Examples: empty input, `http://example.com`, `example`
+- Examples: empty input, `http://example.com`, `https://example.com`, `example`, `example..com`, `user@example.com`, `example!.com`
 - Expected: Validation message is shown and scan is not started.
 
 ## TC-E2E-001
