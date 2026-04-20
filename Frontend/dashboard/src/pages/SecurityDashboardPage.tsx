@@ -22,6 +22,10 @@ import { routes } from '../shared/constants/routes'
 import { mapAssessmentStatus } from '../shared/lib/status'
 
 const PQC_AUTO_CLOSE_MS = 5000
+const apiBaseForMessage = import.meta.env.VITE_API_URL || 'http://localhost:5052'
+const helpText = import.meta.env.DEV
+  ? `Start the API from the API folder (default: ${apiBaseForMessage}), then retry. Vite proxies /api to that host; set VITE_DEV_API_PROXY in .env.development if your API uses another URL.`
+  : `API request failed. Please try again. Backend: ${apiBaseForMessage}`
 
 function formatNorwegianDateTime(iso: string): string {
   try {
@@ -139,15 +143,7 @@ export function SecurityDashboardPage() {
           {state.message}
         </Alert>
         <Box sx={{ mt: 2, color: 'text.secondary', typography: 'body2' }}>
-          Start the API from the <Box component="code">API</Box> folder (default:{' '}
-          <Box component="code" sx={{ px: 0.5 }}>
-            http://localhost:5052
-          </Box>
-          ), then retry. Vite proxies <Box component="code">/api</Box> to that host; set{' '}
-          <Box component="code" sx={{ px: 0.5 }}>
-            VITE_DEV_API_PROXY
-          </Box>{' '}
-          in <Box component="code">.env.development</Box> if your API uses another URL.
+          {helpText}
         </Box>
         <Button
           variant="outlined"
