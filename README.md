@@ -39,23 +39,28 @@ The API exposes dedicated endpoints for each module and one combined assessment 
 From the `API` folder:
 
 ```powershell
-$env:ASPNETCORE_URLS="http://localhost:5555"
-dotnet run --project .\SecurityAssessmentAPI.csproj --no-launch-profile
+dotnet run --project .\SecurityAssessmentAPI.csproj --launch-profile http
 ```
 
 Swagger UI:
 
 ```text
-http://localhost:5555/swagger
+http://localhost:1071/swagger
 ```
 
 OpenAPI JSON:
 
 ```text
-http://localhost:5555/swagger/v1/swagger.json
+http://localhost:1071/swagger/v1/swagger.json
 ```
 
-With the API running, open `Frontend/dashboard`, run `npm install` once, then `npm run dev` (typically `http://localhost:5173`). Vite proxies `/api` to your backend in dev; override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development` if needed.
+With the API running, open `Frontend/dashboard`, run `npm install` once, then `npm run dev` (typically `http://localhost:5173`). Vite proxies `/api` to `http://localhost:1071` in dev; override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development` if needed.
+
+You can also start both the API and Vite together from `Frontend/dashboard`:
+
+```powershell
+npm run dev
+```
 
 ## Notes
 

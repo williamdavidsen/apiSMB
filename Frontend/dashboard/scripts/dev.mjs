@@ -8,7 +8,7 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const dashboardRoot = path.resolve(scriptDir, '..')
 const repoRoot = path.resolve(dashboardRoot, '..', '..')
 const apiProject = path.join(repoRoot, 'API', 'SecurityAssessmentAPI.csproj')
-const apiPort = 5052
+const apiPort = 1071
 const viteCli = path.join(
   dashboardRoot,
   'node_modules',

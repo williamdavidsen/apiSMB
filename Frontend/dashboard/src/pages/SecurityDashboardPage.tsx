@@ -22,7 +22,8 @@ import { routes } from '../shared/constants/routes'
 import { mapAssessmentStatus } from '../shared/lib/status'
 
 const PQC_AUTO_CLOSE_MS = 5000
-const apiBaseForMessage = import.meta.env.VITE_API_URL || 'http://localhost:5052'
+const apiBaseForMessage =
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_DEV_API_PROXY || 'http://localhost:1071'
 const helpText = import.meta.env.DEV
   ? `Start the API from the API folder (default: ${apiBaseForMessage}), then retry. Vite proxies /api to that host; set VITE_DEV_API_PROXY in .env.development if your API uses another URL.`
   : `API request failed. Please try again. Backend: ${apiBaseForMessage}`
