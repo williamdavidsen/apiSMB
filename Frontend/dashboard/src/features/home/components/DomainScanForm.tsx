@@ -55,7 +55,15 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
     <Paper
       component="section"
       variant="outlined"
-      sx={{ p: { xs: 2.5, md: 4 }, borderRadius: 2, bgcolor: 'background.paper' }}
+      sx={{
+        p: { xs: 2.5, md: 4 },
+        borderRadius: '16px',
+        bgcolor: 'rgba(255, 255, 255, 0.86)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)',
+        borderColor: 'rgba(255, 255, 255, 0.6)',
+      }}
       aria-labelledby="scan-form-title"
     >
       <Typography id="scan-form-title" component="h2" variant="h6" align="center" gutterBottom sx={{ fontWeight: 700 }}>

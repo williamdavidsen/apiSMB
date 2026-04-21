@@ -1,26 +1,36 @@
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Collapse from '@mui/material/Collapse'
+import Divider from '@mui/material/Divider'
+import Drawer from '@mui/material/Drawer'
+import List from '@mui/material/List'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemText from '@mui/material/ListItemText'
 import MenuOutlined from '@mui/icons-material/MenuOutlined'
+import ExpandLess from '@mui/icons-material/ExpandLess'
+import ExpandMore from '@mui/icons-material/ExpandMore'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
+import { useState } from 'react'
 import { Link as RouterLink, NavLink, useLocation } from 'react-router-dom'
 import siteLogo from '../../assets/images/brand/site-logo.svg'
 import { routes } from '../../shared/constants/routes'
+import { threatNavItems } from './SideNav'
 
 type TopBarProps = {
   title: string
-  onOpenNav: () => void
-  showNavToggle?: boolean
 }
 
-export function TopBar({ title, onOpenNav, showNavToggle = true }: TopBarProps) {
+export function TopBar({ title }: TopBarProps) {
   const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [threatSubmenuOpen, setThreatSubmenuOpen] = useState(location.pathname.startsWith(routes.threatLandscape))
   const appTitle = 'SMB Security Insight'
   const navItems = [
-    { label: 'Home', to: routes.home },
-    { label: 'Dashboard', to: routes.dashboard },
-    { label: 'Threat Landscape', to: routes.threatPhishing },
+    { label: 'Home', mobileLabel: 'Home', to: routes.home },
+    { label: 'Dashboard', mobileLabel: 'Dashboard', to: routes.dashboard },
+    { label: 'Threat Landscape', mobileLabel: 'Threats', to: routes.threatPhishing },
   ]
 
   return (
@@ -34,18 +44,21 @@ export function TopBar({ title, onOpenNav, showNavToggle = true }: TopBarProps) 
           'linear-gradient(105deg, #008fa1 0%, #00a6ba 45%, #007b88 100%)',
         borderBottom: '1px solid',
         borderColor: 'rgba(0, 98, 115, 0.75)',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'clip',
       }}
     >
-      <Toolbar sx={{ minHeight: 56, position: 'relative' }}>
+      <Toolbar sx={{ minHeight: 56, position: 'relative', gap: 0.5 }}>
         <Button
-          onClick={onOpenNav}
+          onClick={() => setMobileMenuOpen(true)}
           sx={{
             mr: 1,
             color: 'primary.contrastText',
             minWidth: 40,
-            display: showNavToggle ? { xs: 'inline-flex', lg: 'none' } : 'none',
+            display: { xs: 'inline-flex', lg: 'none' },
           }}
-          aria-label="Open navigation menu"
+          aria-label="Open mobile navigation menu"
         >
           <MenuOutlined sx={{ fontSize: 24 }} />
         </Button>
@@ -56,15 +69,26 @@ export function TopBar({ title, onOpenNav, showNavToggle = true }: TopBarProps) 
           sx={{
             textDecoration: 'none',
             color: 'primary.contrastText',
-            mr: { xs: 1.5, md: 2.5 },
+            mr: { xs: 1, md: 2.5 },
             display: 'inline-flex',
             alignItems: 'center',
             gap: 1,
+            minWidth: 0,
           }}
           aria-label="Go to home page"
         >
           <Box component="img" src={siteLogo} alt="" aria-hidden sx={{ width: 24, height: 24 }} />
-          <Typography sx={{ fontWeight: 800, fontSize: { xs: 14, md: 16 }, letterSpacing: 0.2 }}>
+          <Typography
+            sx={{
+              fontWeight: 800,
+              fontSize: { xs: 13, md: 16 },
+              letterSpacing: 0.2,
+              maxWidth: { xs: 110, sm: 'none' },
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
             {appTitle}
           </Typography>
         </Box>
@@ -114,55 +138,76 @@ export function TopBar({ title, onOpenNav, showNavToggle = true }: TopBarProps) 
           })}
         </Box>
 
-        <Box
-          sx={{
-            display: { xs: 'flex', lg: 'none' },
-            ml: 'auto',
-            mr: 0.5,
-            gap: 0.25,
-            overflowX: 'auto',
-            maxWidth: { xs: '54%', sm: '62%' },
-            p: 0.26,
-            borderRadius: 999,
-            bgcolor: 'rgba(255,255,255,0.12)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none',
-          }}
-        >
-          {navItems.map((item) => {
-            const isActive =
-              item.to === routes.dashboard
-                ? location.pathname === routes.dashboard || location.pathname.startsWith(`${routes.dashboard}/`)
-                : item.to === routes.threatPhishing
-                  ? location.pathname.startsWith(routes.threatLandscape)
-                  : location.pathname === item.to
-
-            return (
-              <Button
-                key={`mobile-${item.to}`}
+        <Box sx={{ flex: 1, display: { xs: 'block', lg: 'none' } }} />
+      </Toolbar>
+      <Drawer
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        ModalProps={{ keepMounted: true }}
+        sx={{ display: { xs: 'block', lg: 'none' }, '& .MuiDrawer-paper': { width: 292 } }}
+      >
+        <Box sx={{ py: 1.5 }} role="navigation" aria-label="Mobile navigation">
+          <Typography sx={{ px: 2, pb: 0.8, fontWeight: 800, color: 'secondary.dark' }}>
+            Menu
+          </Typography>
+          <List sx={{ pt: 0 }}>
+            {navItems.slice(0, 2).map((item) => (
+              <ListItemButton
+                key={`mobile-drawer-${item.to}`}
                 component={NavLink}
                 to={item.to}
-                size="small"
+                onClick={() => setMobileMenuOpen(false)}
                 sx={{
-                  color: 'primary.contrastText',
-                  px: 1,
-                  py: 0.28,
-                  minWidth: 'auto',
-                  whiteSpace: 'nowrap',
-                  fontSize: 12,
-                  fontWeight: isActive ? 800 : 600,
-                  borderRadius: 999,
-                  bgcolor: isActive ? 'rgba(255,255,255,0.34)' : 'transparent',
-                  boxShadow: isActive ? 'inset 0 0 0 1px rgba(255,255,255,0.44)' : 'none',
+                  '&.active': {
+                    bgcolor: 'primary.light',
+                    fontWeight: 700,
+                  },
                 }}
               >
-                {item.label}
-              </Button>
-            )
-          })}
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
+            <ListItemButton
+              onClick={() => setThreatSubmenuOpen((prev) => !prev)}
+              sx={{
+                ...(location.pathname.startsWith(routes.threatLandscape)
+                  ? { bgcolor: 'primary.light', fontWeight: 700 }
+                  : null),
+              }}
+            >
+              <ListItemText primary="Threat Landscape" />
+              {threatSubmenuOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+            <Collapse in={threatSubmenuOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {threatNavItems.map((item) => (
+                  <ListItemButton
+                    key={`threat-sub-${item.to}`}
+                    component={NavLink}
+                    to={item.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    sx={{
+                      pl: 4,
+                      '&.active': {
+                        bgcolor: 'rgba(0, 172, 193, 0.14)',
+                        fontWeight: 700,
+                      },
+                    }}
+                  >
+                    <ListItemText primary={item.label} />
+                  </ListItemButton>
+                ))}
+              </List>
+            </Collapse>
+          </List>
+          <Divider sx={{ my: 1.2 }} />
+          <Box sx={{ px: 2 }}>
+            <Button fullWidth variant="outlined" color="secondary" onClick={() => setMobileMenuOpen(false)}>
+              Close menu
+            </Button>
+          </Box>
         </Box>
-      </Toolbar>
+      </Drawer>
     </AppBar>
   )
 }

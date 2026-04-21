@@ -10,6 +10,9 @@ export function Footer() {
         borderColor: 'divider',
         bgcolor: 'background.paper',
         py: 1.5,
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'clip',
       }}
     >
       <Typography variant="caption" align="center" sx={{ display: 'block', color: 'text.secondary' }}>

@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
-import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import homeBackground from '../../assets/images/home/background.png'
 import { routes } from '../../shared/constants/routes'
 import { Footer } from './Footer'
 import { SideNav } from './SideNav'
@@ -16,12 +16,12 @@ function resolveTitle(pathname: string) {
 }
 
 export function MainLayout() {
-  const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
+  const isHomePage = location.pathname === routes.home
   const isThreatPage = location.pathname.startsWith(routes.threatLandscape)
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', width: '100%', overflowX: 'clip' }}>
       <Box
         component="a"
         href="#main-content"
@@ -39,16 +39,28 @@ export function MainLayout() {
         Skip to main content
       </Box>
 
-      <TopBar
-        title={resolveTitle(location.pathname)}
-        onOpenNav={() => setMobileOpen(true)}
-        showNavToggle={isThreatPage}
-      />
+      <TopBar title={resolveTitle(location.pathname)} />
 
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {isThreatPage ? <SideNav mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} /> : null}
+        {isThreatPage ? <SideNav /> : null}
 
-        <Box component="main" id="main-content" sx={{ flex: 1, p: { xs: 1.5, sm: 2.5, md: 4 } }}>
+        <Box
+          component="main"
+          id="main-content"
+          sx={{
+            flex: 1,
+            p: { xs: 1.5, sm: 2.5, md: 4 },
+            minWidth: 0,
+            ...(isHomePage
+              ? {
+                  backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.93)), url(${homeBackground})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                }
+              : null),
+          }}
+        >
           <Outlet />
         </Box>
       </Box>

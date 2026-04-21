@@ -17,7 +17,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
         width: '100%',
         height: { xs: 250, md: 320 },
         objectFit: 'cover',
-        objectPosition: 'center',
+        objectPosition: { xs: 'left center', sm: 'center' },
         transform: reducedMotion ? 'none' : isActive ? 'scale(1.02)' : 'scale(1)',
         transition: reducedMotion ? 'none' : 'transform 420ms ease-out',
         display: 'block',

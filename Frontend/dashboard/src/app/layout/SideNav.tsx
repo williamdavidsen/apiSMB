@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box'
-import Drawer from '@mui/material/Drawer'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -9,18 +8,13 @@ import shieldIcon from '../../assets/images/threat/icons/shield.svg'
 import webIcon from '../../assets/images/threat/icons/web.svg'
 import { routes } from '../../shared/constants/routes'
 
-const threatNavItems = [
+export const threatNavItems = [
   { label: 'Phishing & spoofing', to: routes.threatPhishing, icon: mailIcon },
   { label: 'Weak TLS / certs', to: routes.threatWeakTls, icon: shieldIcon },
   { label: 'Missing headers', to: routes.threatMissingHeaders, icon: webIcon },
 ]
 
-type SideNavProps = {
-  mobileOpen: boolean
-  onCloseMobile: () => void
-}
-
-function NavContent({ onNavigate }: { onNavigate?: () => void }) {
+function NavContent() {
   return (
     <Box role="navigation" aria-label="Threat landscape navigation" sx={{ py: 2 }}>
       <Typography
@@ -37,7 +31,6 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
             <Link
               component={NavLink}
               to={item.to}
-              onClick={onNavigate}
               underline="none"
               sx={{
                 display: 'block',
@@ -70,29 +63,18 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-export function SideNav({ mobileOpen, onCloseMobile }: SideNavProps) {
+export function SideNav() {
   return (
-    <>
-      <Box
-        sx={{
-          display: { xs: 'none', lg: 'block' },
-          width: 240,
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-        }}
-      >
-        <NavContent />
-      </Box>
-
-      <Drawer
-        open={mobileOpen}
-        onClose={onCloseMobile}
-        ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: 'block', lg: 'none' }, '& .MuiDrawer-paper': { width: 280 } }}
-      >
-        <NavContent onNavigate={onCloseMobile} />
-      </Drawer>
-    </>
+    <Box
+      sx={{
+        display: { xs: 'none', lg: 'block' },
+        width: 240,
+        borderRight: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <NavContent />
+    </Box>
   )
 }

@@ -17,7 +17,9 @@ export function HomePage() {
     <Box sx={{ maxWidth: 1180, mx: 'auto', width: '100%' }}>
       <Stack spacing={{ xs: 2.5, md: 3.5 }}>
         <HomeCarousel />
-        <DomainScanForm onSubmitDomain={handleSubmitDomain} />
+        <Box sx={{ px: { xs: 0.5, md: 1 }, boxSizing: 'border-box' }}>
+          <DomainScanForm onSubmitDomain={handleSubmitDomain} />
+        </Box>
       </Stack>
     </Box>
   )
