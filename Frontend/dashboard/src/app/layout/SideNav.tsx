@@ -4,12 +4,15 @@ import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { NavLink } from 'react-router-dom'
+import mailIcon from '../../assets/images/threat/icons/mail.svg'
+import shieldIcon from '../../assets/images/threat/icons/shield.svg'
+import webIcon from '../../assets/images/threat/icons/web.svg'
 import { routes } from '../../shared/constants/routes'
 
-const navItems = [
-  { label: 'Phishing & spoofing', to: routes.threatPhishing },
-  { label: 'Weak TLS / certs', to: routes.threatWeakTls },
-  { label: 'Missing headers', to: routes.threatMissingHeaders },
+const threatNavItems = [
+  { label: 'Phishing & spoofing', to: routes.threatPhishing, icon: mailIcon },
+  { label: 'Weak TLS / certs', to: routes.threatWeakTls, icon: shieldIcon },
+  { label: 'Missing headers', to: routes.threatMissingHeaders, icon: webIcon },
 ]
 
 type SideNavProps = {
@@ -29,7 +32,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
       </Typography>
 
       <Stack component="ul" sx={{ listStyle: 'none', m: 0, p: 0, mt: 1 }}>
-        {navItems.map((item) => (
+        {threatNavItems.map((item) => (
           <Box component="li" key={item.to}>
             <Link
               component={NavLink}
@@ -55,7 +58,10 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
                 },
               }}
             >
-              {item.label}
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <Box component="img" src={item.icon} alt="" aria-hidden sx={{ width: 17, height: 17 }} />
+                <Box component="span">{item.label}</Box>
+              </Stack>
             </Link>
           </Box>
         ))}
@@ -70,7 +76,7 @@ export function SideNav({ mobileOpen, onCloseMobile }: SideNavProps) {
       <Box
         sx={{
           display: { xs: 'none', lg: 'block' },
-          width: 220,
+          width: 240,
           borderRight: '1px solid',
           borderColor: 'divider',
           bgcolor: 'background.paper',
@@ -83,7 +89,7 @@ export function SideNav({ mobileOpen, onCloseMobile }: SideNavProps) {
         open={mobileOpen}
         onClose={onCloseMobile}
         ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: 'block', lg: 'none' }, '& .MuiDrawer-paper': { width: 260 } }}
+        sx={{ display: { xs: 'block', lg: 'none' }, '& .MuiDrawer-paper': { width: 280 } }}
       >
         <NavContent onNavigate={onCloseMobile} />
       </Drawer>

@@ -103,7 +103,19 @@ export function ModuleCard({
           background: `linear-gradient(115deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 52%, #26c6da 100%)`,
         })}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', color: 'inherit', '& svg': { fontSize: 22 } }} aria-hidden>
+        <Box
+          sx={{
+            display: 'grid',
+            placeItems: 'center',
+            width: 28,
+            height: 28,
+            borderRadius: 1.2,
+            color: 'rgba(255,255,255,0.95)',
+            bgcolor: 'rgba(255,255,255,0.14)',
+            '& svg': { fontSize: 20 },
+          }}
+          aria-hidden
+        >
           {icon}
         </Box>
         <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 800 }}>

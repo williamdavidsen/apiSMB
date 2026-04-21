@@ -18,6 +18,7 @@ function resolveTitle(pathname: string) {
 export function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
+  const isThreatPage = location.pathname.startsWith(routes.threatLandscape)
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -38,12 +39,16 @@ export function MainLayout() {
         Skip to main content
       </Box>
 
-      <TopBar title={resolveTitle(location.pathname)} onOpenNav={() => setMobileOpen(true)} />
+      <TopBar
+        title={resolveTitle(location.pathname)}
+        onOpenNav={() => setMobileOpen(true)}
+        showNavToggle={isThreatPage}
+      />
 
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <SideNav mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
+        {isThreatPage ? <SideNav mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} /> : null}
 
-        <Box component="main" id="main-content" sx={{ flex: 1, p: { xs: 2, sm: 3, md: 4 } }}>
+        <Box component="main" id="main-content" sx={{ flex: 1, p: { xs: 1.5, sm: 2.5, md: 4 } }}>
           <Outlet />
         </Box>
       </Box>

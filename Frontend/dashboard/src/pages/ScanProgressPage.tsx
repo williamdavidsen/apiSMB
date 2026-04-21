@@ -7,6 +7,7 @@ import { ScanCancelButton } from '../features/scan/components/ScanCancelButton'
 import { ScanSpinner } from '../features/scan/components/ScanSpinner'
 import { useScanProgress } from '../features/scan/hooks/useScanProgress'
 import { routes } from '../shared/constants/routes'
+import { saveLastScannedDomain } from '../shared/lib/lastScan'
 
 export function ScanProgressPage() {
   const navigate = useNavigate()
@@ -24,6 +25,7 @@ export function ScanProgressPage() {
     if (!isComplete) return
 
     const timer = window.setTimeout(() => {
+      saveLastScannedDomain(domain)
       const params = new URLSearchParams({ domain })
       navigate(`${routes.dashboard}?${params.toString()}`)
     }, 1200)

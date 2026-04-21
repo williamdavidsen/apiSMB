@@ -1,4 +1,8 @@
 import Box from '@mui/material/Box'
+import GppGoodOutlined from '@mui/icons-material/GppGoodOutlined'
+import ArticleOutlined from '@mui/icons-material/ArticleOutlined'
+import MarkEmailReadOutlined from '@mui/icons-material/MarkEmailReadOutlined'
+import LanguageOutlined from '@mui/icons-material/LanguageOutlined'
 import { routes } from '../../../shared/constants/routes'
 import type { ModuleCardView } from '../model/assessment.mappers'
 import { ModuleCard } from './ModuleCard'
@@ -9,16 +13,16 @@ type ModuleCardListProps = {
 }
 
 function iconFor(key: ModuleCardView['key']) {
-  const sx = { fontSize: 20, lineHeight: 1 }
+  const sx = { fontSize: 22, lineHeight: 1 }
   switch (key) {
     case 'ssl-tls':
-      return <Box component="span" sx={sx}>🔐</Box>
+      return <GppGoodOutlined sx={sx} />
     case 'http-headers':
-      return <Box component="span" sx={sx}>🌐</Box>
+      return <ArticleOutlined sx={sx} />
     case 'email':
-      return <Box component="span" sx={sx}>📧</Box>
+      return <MarkEmailReadOutlined sx={sx} />
     case 'reputation':
-      return <Box component="span" sx={sx}>🌍</Box>
+      return <LanguageOutlined sx={sx} />
   }
 }
 

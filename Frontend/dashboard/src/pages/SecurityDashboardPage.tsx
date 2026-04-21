@@ -2,6 +2,7 @@ import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
+import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import HomeOutlined from '@mui/icons-material/HomeOutlined'
@@ -19,6 +20,7 @@ import {
   pickExecutiveBanner,
 } from '../features/assessment/model/assessment.mappers'
 import { routes } from '../shared/constants/routes'
+import { getLastScannedDomain, saveLastScannedDomain } from '../shared/lib/lastScan'
 import { mapAssessmentStatus } from '../shared/lib/status'
 
 const PQC_AUTO_CLOSE_MS = 5000
@@ -40,6 +42,7 @@ export function SecurityDashboardPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const domain = useMemo(() => searchParams.get('domain')?.trim() ?? '', [searchParams])
+  const lastScannedDomain = useMemo(() => getLastScannedDomain(), [])
   const { state, refetch } = useAssessmentDashboard(domain)
   const [pqcOpen, setPqcOpen] = useState(false)
   const pqcCloseTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
@@ -94,17 +97,41 @@ export function SecurityDashboardPage() {
     return () => clearPqcTimer()
   }, [pqcSessionKey, schedulePqcAutoClose, clearPqcTimer])
 
+  useEffect(() => {
+    if (state.status !== 'success' || !domain) return
+    saveLastScannedDomain(domain)
+  }, [state.status, domain])
+
   if (!domain) {
+    const openLastReport = () => {
+      if (!lastScannedDomain) return
+      const params = new URLSearchParams({ domain: lastScannedDomain })
+      navigate(`${routes.dashboard}?${params.toString()}`)
+    }
+
     return (
-      <Box sx={{ maxWidth: 720, mx: 'auto' }}>
-        <Alert severity="info" role="status">
-          No domain was provided. Start a scan from the home page.
-        </Alert>
-        <Box sx={{ mt: 2 }}>
-          <Button variant="contained" color="secondary" onClick={() => navigate(routes.home)}>
-            Go to home
-          </Button>
-        </Box>
+      <Box sx={{ maxWidth: 760, mx: 'auto', py: { xs: 1, md: 4 } }}>
+        <Paper variant="outlined" sx={{ p: { xs: 3, md: 4 } }}>
+          <Stack spacing={2.2}>
+            <Alert severity="info" role="status">
+              No scan yet
+            </Alert>
+            <Typography color="text.secondary">
+              Run your first domain scan from the home page to generate a security dashboard with scores,
+              module findings, and recommendations.
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
+              <Button variant="contained" color="secondary" onClick={() => navigate(routes.home)}>
+                Go to Home and start scan
+              </Button>
+              {lastScannedDomain ? (
+                <Button variant="outlined" color="secondary" onClick={openLastReport}>
+                  Open last report ({lastScannedDomain})
+                </Button>
+              ) : null}
+            </Stack>
+          </Stack>
+        </Paper>
       </Box>
     )
   }
