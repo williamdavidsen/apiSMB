@@ -29,6 +29,10 @@ namespace SecurityAssessmentAPI.Services
             _logger.LogInformation("Email check started: {Domain}", normalizedDomain);
 
             var mxResult = await _dnsAnalysisClient.QueryAsync(normalizedDomain, "MX", cancellationToken);
+            if (!mxResult.Succeeded)
+            {
+                return CreateDnsUnavailableResult(normalizedDomain, "MX lookup could not be completed.");
+            }
 
             if (!mxResult.Records.Any())
             {
@@ -47,13 +51,24 @@ namespace SecurityAssessmentAPI.Services
 
             var txtResult = await txtTask;
             var dmarcResult = await dmarcTask;
+            if (!txtResult.Succeeded || !dmarcResult.Succeeded || dkimTasks.Values.Any(task => !task.Result.Succeeded))
+            {
+                return CreateDnsUnavailableResult(normalizedDomain, "One or more DNS lookups for SPF, DKIM, or DMARC could not be completed.");
+            }
+
             var dkimSelectorsFound = dkimTasks
                 .Where(pair => pair.Value.Result.Records.Any(record => record.Contains("v=DKIM1", StringComparison.OrdinalIgnoreCase)))
                 .Select(pair => pair.Key)
                 .ToList();
 
             var spfRecord = txtResult.Records.FirstOrDefault(record => record.StartsWith("v=spf1", StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
-            var effectiveSpfRecord = await ResolveEffectiveSpfRecordAsync(spfRecord, cancellationToken);
+            var effectiveSpfLookup = await ResolveEffectiveSpfRecordAsync(spfRecord, cancellationToken);
+            if (!effectiveSpfLookup.Succeeded)
+            {
+                return CreateDnsUnavailableResult(normalizedDomain, "The SPF redirect lookup could not be completed.");
+            }
+
+            var effectiveSpfRecord = effectiveSpfLookup.Record;
             var dmarcRecord = dmarcResult.Records.FirstOrDefault(record => record.StartsWith("v=DMARC1", StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
 
             var result = new EmailCheckResult
@@ -273,6 +288,25 @@ namespace SecurityAssessmentAPI.Services
             };
         }
 
+        private static EmailCheckResult CreateDnsUnavailableResult(string domain, string details)
+        {
+            return new EmailCheckResult
+            {
+                Domain = domain,
+                HasMailService = false,
+                ModuleApplicable = true,
+                Status = "ERROR",
+                Alerts = new List<EmailAlert>
+                {
+                    new EmailAlert
+                    {
+                        Type = "WARNING",
+                        Message = $"Email security DNS lookups could not be completed reliably. {details}"
+                    }
+                }
+            };
+        }
+
         private static string NormalizeDomain(string domain)
         {
             var trimmed = domain.Trim();
@@ -293,24 +327,29 @@ namespace SecurityAssessmentAPI.Services
                 .TrimEnd('/');
         }
 
-        private async Task<string> ResolveEffectiveSpfRecordAsync(string spfRecord, CancellationToken cancellationToken)
+        private async Task<(bool Succeeded, string Record)> ResolveEffectiveSpfRecordAsync(string spfRecord, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(spfRecord))
             {
-                return string.Empty;
+                return (true, string.Empty);
             }
 
             // Follow SPF redirect delegation so outsourced mail platforms are scored from the effective policy, not the wrapper.
             var redirectTarget = GetTagValue(spfRecord, "redirect");
             if (string.IsNullOrWhiteSpace(redirectTarget))
             {
-                return spfRecord;
+                return (true, spfRecord);
             }
 
             var redirectTxtResult = await _dnsAnalysisClient.QueryAsync(redirectTarget, "TXT", cancellationToken);
+            if (!redirectTxtResult.Succeeded)
+            {
+                return (false, string.Empty);
+            }
+
             var redirectedSpf = redirectTxtResult.Records.FirstOrDefault(record => record.StartsWith("v=spf1", StringComparison.OrdinalIgnoreCase));
 
-            return string.IsNullOrWhiteSpace(redirectedSpf) ? spfRecord : redirectedSpf;
+            return (true, string.IsNullOrWhiteSpace(redirectedSpf) ? spfRecord : redirectedSpf);
         }
 
         private static string GetTagValue(string record, string tagName)

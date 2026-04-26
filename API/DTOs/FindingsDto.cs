@@ -4,9 +4,9 @@ namespace SecurityAssessmentAPI.DTOs
     {
         public int ReasonId { get; set; }
         public int CheckResultId { get; set; }
-        public string Severity { get; set; } // "Low", "Medium", "High", "Critical"
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string Evidence { get; set; }
+        public string Severity { get; set; } = string.Empty; // "Low", "Medium", "High", "Critical"
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Evidence { get; set; } = string.Empty;
     }
 }

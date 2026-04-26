@@ -198,8 +198,10 @@ namespace SecurityAssessmentAPI.Services
             {
                 result.Alerts.Add(new AssessmentAlert
                 {
-                    Type = "INFO",
-                    Message = "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model."
+                    Type = string.Equals(emailResult.Status, "ERROR", StringComparison.OrdinalIgnoreCase) ? "WARNING" : "INFO",
+                    Message = string.Equals(emailResult.Status, "ERROR", StringComparison.OrdinalIgnoreCase)
+                        ? "Email security analysis could not be completed reliably, so the module was excluded from the final weighted score."
+                        : "No MX record was found. The email security module was excluded and the final score was normalized according to the no-email model."
                 });
             }
 

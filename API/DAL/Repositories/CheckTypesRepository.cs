@@ -14,7 +14,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             _context = context;
         }
 
-        public async Task<CheckTypeDto> GetByIdAsync(int id)
+        public async Task<CheckTypeDto?> GetByIdAsync(int id)
         {
             var entity = await _context.CheckTypes
                 .Include(ct => ct.CheckResults)
@@ -27,10 +27,10 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             var entities = await _context.CheckTypes
                 .Include(ct => ct.CheckResults)
                 .ToListAsync();
-            return entities.Select(ct => ct.ToDto());
+            return entities.Select(ct => ct.ToDto()!);
         }
 
-        public async Task<CheckTypeDto> GetByCodeAsync(string code)
+        public async Task<CheckTypeDto?> GetByCodeAsync(string code)
         {
             var entity = await _context.CheckTypes
                 .FirstOrDefaultAsync(ct => ct.Code == code);
@@ -39,18 +39,18 @@ namespace SecurityAssessmentAPI.DAL.Repositories
 
         public async Task<CheckTypeDto> AddAsync(CheckTypeDto checkTypeDto)
         {
-            var entity = checkTypeDto.ToEntity();
+            var entity = checkTypeDto.ToEntity()!;
             _context.CheckTypes.Add(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<CheckTypeDto> UpdateAsync(CheckTypeDto checkTypeDto)
         {
-            var entity = checkTypeDto.ToEntity();
+            var entity = checkTypeDto.ToEntity()!;
             _context.CheckTypes.Update(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<bool> DeleteAsync(int id)

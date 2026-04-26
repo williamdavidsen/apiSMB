@@ -43,6 +43,22 @@ public sealed class AssessmentCheckingServiceTests
         Assert.True(result.EmailModuleIncluded);
     }
 
+    [Fact]
+    public async Task CheckAssessmentAsync_WhenEmailDnsFails_UsesPartialWarningInsteadOfNoMxMessage()
+    {
+        var service = CreateService(
+            ssl: new SslCheckResult { OverallScore = 30, MaxScore = 30, Status = "PASS" },
+            headers: new HeadersCheckResult { OverallScore = 10, MaxScore = 10, Status = "PASS" },
+            email: new EmailCheckResult { ModuleApplicable = true, HasMailService = false, OverallScore = 0, MaxScore = 20, Status = "ERROR" },
+            reputation: new ReputationCheckResult { OverallScore = 20, MaxScore = 20, Status = "PASS" });
+
+        var result = await service.CheckAssessmentAsync("example.com");
+
+        Assert.Equal("PARTIAL", result.Status);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("could not be completed reliably", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.Alerts, alert => alert.Message.Contains("No MX record", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static AssessmentCheckingService CreateService(
         SslCheckResult ssl,
         HeadersCheckResult headers,

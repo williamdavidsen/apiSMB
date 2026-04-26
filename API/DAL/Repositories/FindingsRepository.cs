@@ -14,7 +14,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             _context = context;
         }
 
-        public async Task<FindingsDto> GetByIdAsync(int id)
+        public async Task<FindingsDto?> GetByIdAsync(int id)
         {
             var entity = await _context.Findings
                 .Include(f => f.CheckResult)
@@ -27,7 +27,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             var entities = await _context.Findings
                 .Include(f => f.CheckResult)
                 .ToListAsync();
-            return entities.Select(f => f.ToDto());
+            return entities.Select(f => f.ToDto()!);
         }
 
         public async Task<IEnumerable<FindingsDto>> GetByCheckResultIdAsync(int checkResultId)
@@ -35,23 +35,23 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             var entities = await _context.Findings
                 .Where(f => f.CheckResultId == checkResultId)
                 .ToListAsync();
-            return entities.Select(f => f.ToDto());
+            return entities.Select(f => f.ToDto()!);
         }
 
         public async Task<FindingsDto> AddAsync(FindingsDto findingDto)
         {
-            var entity = findingDto.ToEntity();
+            var entity = findingDto.ToEntity()!;
             _context.Findings.Add(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<FindingsDto> UpdateAsync(FindingsDto findingDto)
         {
-            var entity = findingDto.ToEntity();
+            var entity = findingDto.ToEntity()!;
             _context.Findings.Update(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<bool> DeleteAsync(int id)

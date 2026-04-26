@@ -30,7 +30,7 @@ namespace SecurityAssessmentAPI.Models.Entities
         public Grade Grade { get; set; }
 
         // Navigation properties
-        public Asset Asset { get; set; }
+        public Asset Asset { get; set; } = null!;
         public ICollection<CheckResult> CheckResults { get; set; } = new List<CheckResult>();
     }
 }

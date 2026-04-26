@@ -4,7 +4,9 @@ namespace SecurityAssessmentAPI.Services
 {
     public class DnsLookupResult
     {
+        public bool Succeeded { get; set; }
         public List<string> Records { get; set; } = new();
+        public string ErrorMessage { get; set; } = string.Empty;
     }
 
     public interface IDnsAnalysisClient
@@ -40,7 +42,11 @@ namespace SecurityAssessmentAPI.Services
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "DNS analysis failed: Name={Name}, Type={Type}", name, type);
-                return new DnsLookupResult();
+                return new DnsLookupResult
+                {
+                    Succeeded = false,
+                    ErrorMessage = ex.Message
+                };
             }
         }
 
@@ -48,7 +54,10 @@ namespace SecurityAssessmentAPI.Services
         {
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
-            var result = new DnsLookupResult();
+            var result = new DnsLookupResult
+            {
+                Succeeded = true
+            };
 
             if (!root.TryGetProperty("Answer", out var answersElement) || answersElement.ValueKind != JsonValueKind.Array)
             {

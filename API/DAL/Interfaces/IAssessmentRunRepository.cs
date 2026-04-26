@@ -4,7 +4,7 @@ namespace SecurityAssessmentAPI.DAL.Interfaces
 {
     public interface IAssessmentRunRepository
     {
-        Task<AssessmentRunDto> GetByIdAsync(int id);
+        Task<AssessmentRunDto?> GetByIdAsync(int id);
         Task<IEnumerable<AssessmentRunDto>> GetAllAsync();
         Task<IEnumerable<AssessmentRunDto>> GetByAssetIdAsync(int assetId);
         Task<AssessmentRunDto> AddAsync(AssessmentRunDto assessmentRunDto);

@@ -81,7 +81,12 @@ export function dashboardHeadline(grade: string, status: string, score: number):
   return 'Security analysis dashboard'
 }
 
-export function dashboardEmailSubtitle(emailModuleIncluded: boolean): string {
+export function dashboardEmailSubtitle(emailModuleIncluded: boolean, emailStatus: string): string {
+  const status = emailStatus.trim().toUpperCase()
+  if (status === 'ERROR') {
+    return '(E-mail security could not be evaluated reliably)'
+  }
+
   return emailModuleIncluded
     ? '(E-mail security evaluated from DNS records)'
     : '(E-mail security not evaluated)'
@@ -90,6 +95,19 @@ export function dashboardEmailSubtitle(emailModuleIncluded: boolean): string {
 export function formatHeaderPresence(detail: { score: number; details: string }): string {
   if (detail.score <= 0) return 'Missing'
   return 'Present'
+}
+
+export function isHeaderControlMissingOrWeak(detail: { score: number; details: string }): boolean {
+  const text = detail.details.trim().toLowerCase()
+  if (!text) return detail.score <= 0
+
+  return (
+    text.includes('missing') ||
+    text.includes('was not found') ||
+    text.includes('neither x-frame-options nor csp frame-ancestors was found') ||
+    text.includes('unsafe directives') ||
+    text.includes('weaker than recommended')
+  )
 }
 
 export function formatEmailPresence(detail: { score: number }): string {
@@ -168,6 +186,7 @@ function toneEmailRow(value: string): ModuleFactTone {
   if (value === 'Missing') return 'error'
   if (value === 'Detected') return 'success'
   if (value === 'Not evaluated') return 'neutral'
+  if (value === 'Unavailable') return 'warning'
   return 'neutral'
 }
 
@@ -203,10 +222,12 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
           ? 'Moderate'
           : 'High'
 
-  const observatoryGrade =
+  const headersPercent = modulePercent(headers.overallScore, headers.maxScore)
+  const headersGrade = gradeFromPercent(headersPercent)
+  const observatoryStatusLine =
     headers.observatory.grade && headers.observatory.grade !== 'UNAVAILABLE'
-      ? headers.observatory.grade
-      : gradeFromPercent(modulePercent(headers.overallScore, headers.maxScore))
+      ? `Observatory grade ${headers.observatory.grade} (${headers.observatory.score}/100)`
+      : undefined
 
   const headersBullet =
     headers.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))?.message ||
@@ -216,6 +237,7 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
   const headersCallout = headers.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
 
   const emailIncluded = assessment.emailModuleIncluded
+  const emailUnavailable = email.status.toUpperCase() === 'ERROR'
 
   const emailFacts: ModuleCardFact[] = emailIncluded
     ? [
@@ -235,6 +257,12 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
           tone: toneEmailRow(formatEmailPresence(email.criteria.dmarcEnforcement)),
         },
       ]
+    : emailUnavailable
+      ? [
+          { label: 'SPF', value: 'Unavailable', tone: 'warning' },
+          { label: 'DKIM', value: 'Unavailable', tone: 'warning' },
+          { label: 'DMARC', value: 'Unavailable', tone: 'warning' },
+        ]
     : [
         { label: 'SPF', value: 'Not evaluated', tone: 'neutral' },
         { label: 'DKIM', value: 'Not evaluated', tone: 'neutral' },
@@ -243,11 +271,15 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
 
   const emailBullet = emailIncluded
     ? email.alerts[0]?.message || email.criteria.spfVerification.details
-    : 'No MX records were found for this hostname, so e-mail authentication was not scored.'
+    : emailUnavailable
+      ? email.alerts[0]?.message || 'E-mail security DNS lookups could not be completed reliably.'
+      : 'No MX records were found for this hostname, so e-mail authentication was not scored.'
 
   const emailCallout = emailIncluded
     ? email.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
-    : undefined
+    : emailUnavailable
+      ? { type: 'WARNING', message: email.alerts[0]?.message || 'E-mail security DNS lookups could not be completed reliably.' }
+      : undefined
 
   const repVerdict = reputationVerdict(
     reputation.status,
@@ -307,9 +339,10 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
     {
       key: 'http-headers',
       title: 'HTTP Headers',
-      moduleGrade: observatoryGrade,
+      moduleGrade: headersGrade,
       moduleApiStatus: headers.status,
       scoreFill: { current: headers.overallScore, max: headers.maxScore },
+      statusLine: observatoryStatusLine,
       facts: [
         { label: 'HSTS', value: hstsVal, tone: toneHeaderPresence(hstsVal) },
         { label: 'CSP', value: cspVal, tone: toneHeaderPresence(cspVal) },
@@ -329,17 +362,25 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
       moduleGrade: emailIncluded ? gradeFromPercent(modulePercent(email.overallScore, email.maxScore)) : '—',
       moduleApiStatus: email.status,
       scoreFill: emailIncluded ? { current: email.overallScore, max: email.maxScore } : undefined,
-      statusLine: emailIncluded ? undefined : 'Not evaluated',
+      statusLine: emailIncluded ? undefined : emailUnavailable ? 'Could not evaluate' : 'Not evaluated',
       facts: emailFacts,
       bullet: hideBulletIfSameAsCallout(
         emailBullet ? `• ${emailBullet}` : undefined,
-        emailIncluded ? emailCallout?.message : emailNotInFinalScoreMessage,
+        emailIncluded ? emailCallout?.message : emailUnavailable ? emailCallout?.message : emailNotInFinalScoreMessage,
       ),
       callout: emailCallout
-        ? { message: emailCallout.message, tone: 'critical' }
+        ? {
+            message: emailCallout.message,
+            tone: emailUnavailable ? 'warning' : 'critical',
+          }
         : emailIncluded
           ? undefined
-          : { message: emailNotInFinalScoreMessage, tone: 'info' },
+          : emailUnavailable
+            ? {
+                message: email.alerts[0]?.message || 'E-mail security DNS lookups could not be completed reliably.',
+                tone: 'warning',
+              }
+            : { message: emailNotInFinalScoreMessage, tone: 'info' },
     },
     {
       key: 'reputation',

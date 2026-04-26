@@ -26,6 +26,7 @@ import {
   fetchReputationCheck,
   fetchSslCheck,
 } from '../features/assessment/services/assessment.api'
+import { isHeaderControlMissingOrWeak } from '../features/assessment/model/assessment.mappers'
 import { routes } from '../shared/constants/routes'
 import { normalizeDomainInput } from '../shared/lib/domain'
 import { gradeFromPercent, modulePercent } from '../shared/lib/score'
@@ -823,19 +824,17 @@ function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, s
   if (moduleKey === 'http-headers') {
     const data = payload as HeadersCheckResult
     const missingBits: string[] = []
-    if (data.criteria.strictTransportSecurity.score <= 0) missingBits.push('HSTS')
-    if (data.criteria.contentSecurityPolicy.score <= 0) missingBits.push('CSP')
-    if (data.criteria.clickjackingProtection.score <= 0) missingBits.push('clickjacking protection')
-    if (data.criteria.mimeSniffingProtection.score <= 0) missingBits.push('MIME sniffing protection')
-    if (data.criteria.referrerPolicy.score <= 0) missingBits.push('referrer policy')
+    if (isHeaderControlMissingOrWeak(data.criteria.strictTransportSecurity)) missingBits.push('HSTS')
+    if (isHeaderControlMissingOrWeak(data.criteria.contentSecurityPolicy)) missingBits.push('CSP')
+    if (isHeaderControlMissingOrWeak(data.criteria.clickjackingProtection)) missingBits.push('clickjacking protection')
+    if (isHeaderControlMissingOrWeak(data.criteria.mimeSniffingProtection)) missingBits.push('MIME sniffing protection')
+    if (isHeaderControlMissingOrWeak(data.criteria.referrerPolicy)) missingBits.push('referrer policy')
 
     return {
       moduleTitle: 'HTTP headers analysis',
       score: data.overallScore,
       maxScore: data.maxScore,
-      moduleGrade: data.observatory.grade && data.observatory.grade !== 'UNAVAILABLE'
-        ? data.observatory.grade
-        : gradeFromPercent(modulePercent(data.overallScore, data.maxScore)),
+      moduleGrade: gradeFromPercent(modulePercent(data.overallScore, data.maxScore)),
       status: data.status,
       summary: [
         data.criteria.strictTransportSecurity.details,
@@ -864,7 +863,8 @@ function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, s
 
   if (moduleKey === 'email') {
     const data = payload as EmailCheckResult
-    const moduleScored = data.moduleApplicable
+    const moduleErrored = data.status.toUpperCase() === 'ERROR'
+    const moduleScored = data.moduleApplicable && !moduleErrored
     return {
       moduleTitle: 'E-mail security analysis',
       score: data.overallScore,
@@ -872,16 +872,24 @@ function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, s
       moduleGrade: moduleScored ? gradeFromPercent(modulePercent(data.overallScore, data.maxScore)) : '—',
       status: data.status,
       summary: [
-        data.criteria.spfVerification.details,
-        data.criteria.dkimActivated.details,
-        data.criteria.dmarcEnforcement.details,
+        moduleErrored
+          ? 'DNS-based e-mail security checks could not be completed reliably for this domain.'
+          : data.criteria.spfVerification.details,
+        moduleErrored
+          ? 'SPF, DKIM, and DMARC evidence may be incomplete because the upstream DNS lookup failed.'
+          : data.criteria.dkimActivated.details,
+        moduleErrored
+          ? 'Re-run the scan after the DNS provider or network path is available again.'
+          : data.criteria.dmarcEnforcement.details,
       ],
       recommendation:
         data.alerts.find((alert) => alert.type.toUpperCase().includes('CRITICAL'))?.message ||
         data.alerts[0]?.message ||
         (moduleScored
           ? 'Strengthen SPF, DKIM, and DMARC together to reduce spoofing and phishing risk.'
-          : 'No active mail profile found on this domain; validate mail setup before enabling policy enforcement.'),
+          : moduleErrored
+            ? 'Verify DNS provider reachability and repeat the scan before drawing conclusions from the e-mail module.'
+            : 'No active mail profile found on this domain; validate mail setup before enabling policy enforcement.'),
       checklist: [
         'Publish SPF with explicit sender sources and an enforcement policy.',
         'Enable DKIM signing for all outbound mail flows and rotate keys periodically.',
@@ -890,8 +898,8 @@ function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, s
       evidence: [
         `Module applicable: ${data.moduleApplicable ? 'yes' : 'no'}.`,
         `MX records: ${data.dnsSummary.mxRecords.length > 0 ? data.dnsSummary.mxRecords.join(', ') : 'none found'}.`,
-        `SPF: ${data.dnsSummary.spfRecord || 'not found'}.`,
-        `DMARC: ${data.dnsSummary.dmarcRecord || 'not found'}.`,
+        `SPF: ${moduleErrored ? 'lookup unavailable' : data.dnsSummary.spfRecord || 'not found'}.`,
+        `DMARC: ${moduleErrored ? 'lookup unavailable' : data.dnsSummary.dmarcRecord || 'not found'}.`,
       ],
     }
   }

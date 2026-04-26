@@ -14,7 +14,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             _context = context;
         }
 
-        public async Task<AssetDto> GetByIdAsync(int id)
+        public async Task<AssetDto?> GetByIdAsync(int id)
         {
             var entity = await _context.Assets
                 .Include(a => a.AssessmentRuns)
@@ -29,23 +29,23 @@ namespace SecurityAssessmentAPI.DAL.Repositories
                 .Include(a => a.AssessmentRuns)
                 .ToListAsync();
 
-            return entities.Select(a => a.ToDto());
+            return entities.Select(a => a.ToDto()!);
         }
 
         public async Task<AssetDto> AddAsync(AssetDto assetDto)
         {
-            var entity = assetDto.ToEntity();
+            var entity = assetDto.ToEntity()!;
             _context.Assets.Add(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<AssetDto> UpdateAsync(AssetDto assetDto)
         {
-            var entity = assetDto.ToEntity();
+            var entity = assetDto.ToEntity()!;
             _context.Assets.Update(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<bool> DeleteAsync(int id)

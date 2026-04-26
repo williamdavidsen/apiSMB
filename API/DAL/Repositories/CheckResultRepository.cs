@@ -14,7 +14,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             _context = context;
         }
 
-        public async Task<CheckResultDto> GetByIdAsync(int id)
+        public async Task<CheckResultDto?> GetByIdAsync(int id)
         {
             var entity = await _context.CheckResults
                 .Include(cr => cr.CheckType)
@@ -31,7 +31,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
                 .Include(cr => cr.AssessmentRun)
                 .Include(cr => cr.Findings)
                 .ToListAsync();
-            return entities.Select(cr => cr.ToDto());
+            return entities.Select(cr => cr.ToDto()!);
         }
 
         public async Task<IEnumerable<CheckResultDto>> GetByRunIdAsync(int runId)
@@ -41,10 +41,10 @@ namespace SecurityAssessmentAPI.DAL.Repositories
                 .Include(cr => cr.Findings)
                 .Where(cr => cr.RunId == runId)
                 .ToListAsync();
-            return entities.Select(cr => cr.ToDto());
+            return entities.Select(cr => cr.ToDto()!);
         }
 
-        public async Task<CheckResultDto> GetByRunAndCheckTypeAsync(int runId, int checkTypeId)
+        public async Task<CheckResultDto?> GetByRunAndCheckTypeAsync(int runId, int checkTypeId)
         {
             var entity = await _context.CheckResults
                 .Include(cr => cr.CheckType)
@@ -55,18 +55,18 @@ namespace SecurityAssessmentAPI.DAL.Repositories
 
         public async Task<CheckResultDto> AddAsync(CheckResultDto checkResultDto)
         {
-            var entity = checkResultDto.ToEntity();
+            var entity = checkResultDto.ToEntity()!;
             _context.CheckResults.Add(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<CheckResultDto> UpdateAsync(CheckResultDto checkResultDto)
         {
-            var entity = checkResultDto.ToEntity();
+            var entity = checkResultDto.ToEntity()!;
             _context.CheckResults.Update(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<bool> DeleteAsync(int id)

@@ -7,7 +7,7 @@ namespace SecurityAssessmentAPI.DAL
 {
     public static class DtoMapper
     {
-        public static AssetDto ToDto(this Asset entity)
+        public static AssetDto? ToDto(this Asset? entity)
         {
             if (entity == null) return null;
             return new AssetDto
@@ -15,11 +15,11 @@ namespace SecurityAssessmentAPI.DAL
                 AssetId = entity.AssetId,
                 AssetType = entity.AssetType.ToString(),
                 Value = entity.Value,
-                AssessmentRuns = entity.AssessmentRuns?.Select(ar => ar.ToDto()).ToList() ?? new List<AssessmentRunDto>()
+                AssessmentRuns = entity.AssessmentRuns?.Select(ar => ar.ToDto()!).ToList() ?? new List<AssessmentRunDto>()
             };
         }
 
-        public static Asset ToEntity(this AssetDto dto)
+        public static Asset? ToEntity(this AssetDto? dto)
         {
             if (dto == null) return null;
             return new Asset
@@ -27,11 +27,11 @@ namespace SecurityAssessmentAPI.DAL
                 AssetId = dto.AssetId,
                 AssetType = Enum.TryParse<AssetType>(dto.AssetType, true, out var type) ? type : AssetType.Domain,
                 Value = dto.Value,
-                AssessmentRuns = dto.AssessmentRuns?.Select(ar => ar.ToEntity()).ToList() ?? new List<AssessmentRun>()
+                AssessmentRuns = dto.AssessmentRuns?.Select(ar => ar.ToEntity()!).ToList() ?? new List<AssessmentRun>()
             };
         }
 
-        public static AssessmentRunDto ToDto(this AssessmentRun entity)
+        public static AssessmentRunDto? ToDto(this AssessmentRun? entity)
         {
             if (entity == null) return null;
             return new AssessmentRunDto
@@ -43,11 +43,11 @@ namespace SecurityAssessmentAPI.DAL
                 Status = entity.Status.ToString(),
                 SummaryScore = entity.SummaryScore,
                 Grade = entity.Grade.ToString(),
-                CheckResults = entity.CheckResults?.Select(cr => cr.ToDto()).ToList() ?? new List<CheckResultDto>()
+                CheckResults = entity.CheckResults?.Select(cr => cr.ToDto()!).ToList() ?? new List<CheckResultDto>()
             };
         }
 
-        public static AssessmentRun ToEntity(this AssessmentRunDto dto)
+        public static AssessmentRun? ToEntity(this AssessmentRunDto? dto)
         {
             if (dto == null) return null;
             return new AssessmentRun
@@ -59,11 +59,11 @@ namespace SecurityAssessmentAPI.DAL
                 Status = Enum.TryParse<AssessmentStatus>(dto.Status, true, out var status) ? status : AssessmentStatus.Pending,
                 SummaryScore = dto.SummaryScore,
                 Grade = Enum.TryParse<Grade>(dto.Grade, true, out var grade) ? grade : Grade.F,
-                CheckResults = dto.CheckResults?.Select(cr => cr.ToEntity()).ToList() ?? new List<CheckResult>()
+                CheckResults = dto.CheckResults?.Select(cr => cr.ToEntity()!).ToList() ?? new List<CheckResult>()
             };
         }
 
-        public static CheckTypeDto ToDto(this CheckType entity)
+        public static CheckTypeDto? ToDto(this CheckType? entity)
         {
             if (entity == null) return null;
             return new CheckTypeDto
@@ -74,7 +74,7 @@ namespace SecurityAssessmentAPI.DAL
             };
         }
 
-        public static CheckType ToEntity(this CheckTypeDto dto)
+        public static CheckType? ToEntity(this CheckTypeDto? dto)
         {
             if (dto == null) return null;
             return new CheckType
@@ -85,7 +85,7 @@ namespace SecurityAssessmentAPI.DAL
             };
         }
 
-        public static CheckResultDto ToDto(this CheckResult entity)
+        public static CheckResultDto? ToDto(this CheckResult? entity)
         {
             if (entity == null) return null;
             return new CheckResultDto
@@ -98,11 +98,11 @@ namespace SecurityAssessmentAPI.DAL
                 RawPayload = entity.RawPayload,
                 NormalizedData = entity.NormalizedData,
                 CheckType = entity.CheckType?.ToDto(),
-                Findings = entity.Findings?.Select(f => f.ToDto()).ToList() ?? new List<FindingsDto>()
+                Findings = entity.Findings?.Select(f => f.ToDto()!).ToList() ?? new List<FindingsDto>()
             };
         }
 
-        public static CheckResult ToEntity(this CheckResultDto dto)
+        public static CheckResult? ToEntity(this CheckResultDto? dto)
         {
             if (dto == null) return null;
             return new CheckResult
@@ -114,11 +114,11 @@ namespace SecurityAssessmentAPI.DAL
                 Status = Enum.TryParse<CheckResultStatus>(dto.Status, true, out var status) ? status : CheckResultStatus.NotAvailable,
                 RawPayload = dto.RawPayload,
                 NormalizedData = dto.NormalizedData,
-                Findings = dto.Findings?.Select(f => f.ToEntity()).ToList() ?? new List<Finding>()
+                Findings = dto.Findings?.Select(f => f.ToEntity()!).ToList() ?? new List<Finding>()
             };
         }
 
-        public static FindingsDto ToDto(this Finding entity)
+        public static FindingsDto? ToDto(this Finding? entity)
         {
             if (entity == null) return null;
             return new FindingsDto
@@ -132,7 +132,7 @@ namespace SecurityAssessmentAPI.DAL
             };
         }
 
-        public static Finding ToEntity(this FindingsDto dto)
+        public static Finding? ToEntity(this FindingsDto? dto)
         {
             if (dto == null) return null;
             return new Finding

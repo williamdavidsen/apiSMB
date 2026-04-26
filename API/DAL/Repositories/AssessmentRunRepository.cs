@@ -14,7 +14,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
             _context = context;
         }
 
-        public async Task<AssessmentRunDto> GetByIdAsync(int id)
+        public async Task<AssessmentRunDto?> GetByIdAsync(int id)
         {
             var entity = await _context.AssessmentRuns
                 .Include(ar => ar.Asset)
@@ -33,7 +33,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
                     .ThenInclude(cr => cr.Findings)
                 .ToListAsync();
 
-            return entities.Select(ar => ar.ToDto());
+            return entities.Select(ar => ar.ToDto()!);
         }
 
         public async Task<IEnumerable<AssessmentRunDto>> GetByAssetIdAsync(int assetId)
@@ -44,23 +44,23 @@ namespace SecurityAssessmentAPI.DAL.Repositories
                 .Where(ar => ar.AssetId == assetId)
                 .ToListAsync();
 
-            return entities.Select(ar => ar.ToDto());
+            return entities.Select(ar => ar.ToDto()!);
         }
 
         public async Task<AssessmentRunDto> AddAsync(AssessmentRunDto assessmentRunDto)
         {
-            var entity = assessmentRunDto.ToEntity();
+            var entity = assessmentRunDto.ToEntity()!;
             _context.AssessmentRuns.Add(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<AssessmentRunDto> UpdateAsync(AssessmentRunDto assessmentRunDto)
         {
-            var entity = assessmentRunDto.ToEntity();
+            var entity = assessmentRunDto.ToEntity()!;
             _context.AssessmentRuns.Update(entity);
             await _context.SaveChangesAsync();
-            return entity.ToDto();
+            return entity.ToDto()!;
         }
 
         public async Task<bool> DeleteAsync(int id)

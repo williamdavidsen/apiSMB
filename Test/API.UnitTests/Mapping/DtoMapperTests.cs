@@ -28,6 +28,7 @@ public sealed class DtoMapperTests
         };
 
         var dto = asset.ToDto();
+        Assert.NotNull(dto);
 
         Assert.Equal(42, dto.AssetId);
         Assert.Equal("Domain", dto.AssetType);
@@ -47,6 +48,7 @@ public sealed class DtoMapperTests
         };
 
         var entity = dto.ToEntity();
+        Assert.NotNull(entity);
 
         Assert.Equal(AssetType.Domain, entity.AssetType);
         Assert.Equal("example.com", entity.Value);

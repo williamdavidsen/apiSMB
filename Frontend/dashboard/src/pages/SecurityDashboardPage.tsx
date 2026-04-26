@@ -192,7 +192,7 @@ export function SecurityDashboardPage() {
   const { data, scannedAtIso } = state
   const uiStatus = mapAssessmentStatus(data.assessment.status, data.assessment.overallScore)
   const headline = dashboardHeadline(data.assessment.grade, data.assessment.status, data.assessment.overallScore)
-  const subtitle = dashboardEmailSubtitle(data.assessment.emailModuleIncluded)
+  const subtitle = dashboardEmailSubtitle(data.assessment.emailModuleIncluded, data.email.status)
   const banner = pickExecutiveBanner(data)
   const cards = buildModuleCards(data)
 
