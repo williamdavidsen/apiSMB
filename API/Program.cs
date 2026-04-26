@@ -58,14 +58,14 @@ builder.Services.AddHttpClient<IVirusTotalClient, VirusTotalClient>(client =>
 
 var app = builder.Build();
 
-// Swagger'ı production'da da aç
+// Keep Swagger enabled in production as well.
 app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors("AllowFrontend");
 
-// Ana sayfaya basit cevap ver
+// Return a simple response on the root route.
 app.MapGet("/", () => Results.Ok(new
 {
     message = "SecurityAssessment API is running",
