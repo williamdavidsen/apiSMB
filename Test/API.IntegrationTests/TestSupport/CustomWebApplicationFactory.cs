@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SecurityAssessmentAPI.DTOs;
 using SecurityAssessmentAPI.Services;
 
@@ -9,9 +10,15 @@ namespace API.IntegrationTests.TestSupport;
 
 public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
+    internal const string ThrowDomain = "throw.example";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+        });
         builder.ConfigureTestServices(services =>
         {
             RemoveIfRegistered<ISslCheckingService>(services);
@@ -42,6 +49,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         public Task<HeadersCheckResult> CheckHeadersAsync(string domain, CancellationToken cancellationToken = default)
         {
+            ThrowIfRequested(domain);
             return Task.FromResult(new HeadersCheckResult
             {
                 Domain = domain,
@@ -55,6 +63,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         public Task<SslCheckResult> CheckSslAsync(string domain, CancellationToken cancellationToken = default)
         {
+            ThrowIfRequested(domain);
             return Task.FromResult(new SslCheckResult
             {
                 Domain = domain,
@@ -65,6 +74,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         public Task<SslDetailResult> GetSslDetailsAsync(string domain, CancellationToken cancellationToken = default)
         {
+            ThrowIfRequested(domain);
             return Task.FromResult(new SslDetailResult
             {
                 Domain = domain,
@@ -87,6 +97,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         public Task<EmailCheckResult> CheckEmailAsync(string domain, CancellationToken cancellationToken = default)
         {
+            ThrowIfRequested(domain);
             return Task.FromResult(new EmailCheckResult
             {
                 Domain = domain,
@@ -109,6 +120,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         public Task<ReputationCheckResult> CheckReputationAsync(string domain, CancellationToken cancellationToken = default)
         {
+            ThrowIfRequested(domain);
             return Task.FromResult(new ReputationCheckResult
             {
                 Domain = domain,
@@ -134,6 +146,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         public Task<PqcCheckResult> CheckPqcAsync(string domain, CancellationToken cancellationToken = default)
         {
+            ThrowIfRequested(domain);
             return Task.FromResult(new PqcCheckResult
             {
                 Domain = domain,
@@ -149,6 +162,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         public Task<AssessmentCheckResult> CheckAssessmentAsync(string domain, CancellationToken cancellationToken = default)
         {
+            ThrowIfRequested(domain);
             return Task.FromResult(new AssessmentCheckResult
             {
                 Domain = domain,
@@ -164,6 +178,14 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                     }
                 ]
             });
+        }
+    }
+
+    private static void ThrowIfRequested(string domain)
+    {
+        if (string.Equals(domain, ThrowDomain, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Simulated service failure.");
         }
     }
 }

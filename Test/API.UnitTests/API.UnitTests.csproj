@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\API\SecurityAssessmentAPI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\AssessmentBatchRunner\BatchAssessmentRunner.cs" Link="BatchRunner\BatchAssessmentRunner.cs" />
+  </ItemGroup>
+
 </Project>

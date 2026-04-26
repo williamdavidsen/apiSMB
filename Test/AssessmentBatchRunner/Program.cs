@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+using AssessmentBatchRunnerTool;
 
 var apiBaseUrl = args.Length > 0 ? args[0].TrimEnd('/') : "http://localhost:5555";
 var domainFile = args.Length > 1 ? args[1] : "domains.txt";
@@ -15,47 +15,10 @@ var domains = File.ReadAllLines(domainFile)
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToList();
 
-if (domains.Count == 0)
-{
-    Console.Error.WriteLine("Domain file did not contain any domains.");
-    return 1;
-}
-
 using var httpClient = new HttpClient
 {
     BaseAddress = new Uri(apiBaseUrl),
     Timeout = TimeSpan.FromMinutes(2)
 };
 
-Console.WriteLine($"Running assessment batch against {apiBaseUrl}");
-Console.WriteLine($"Domains: {domains.Count}");
-Console.WriteLine("domain,status,grade,overallScore");
-
-foreach (var domain in domains)
-{
-    try
-    {
-        var response = await httpClient.PostAsJsonAsync("/api/assessment/check", new { domain });
-        if (!response.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"{domain},HTTP_{(int)response.StatusCode},,");
-            continue;
-        }
-
-        var result = await response.Content.ReadFromJsonAsync<AssessmentBatchResult>();
-        Console.WriteLine($"{domain},{result?.Status},{result?.Grade},{result?.OverallScore}");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"{domain},ERROR,,\"{ex.Message.Replace("\"", "'")}\"");
-    }
-}
-
-return 0;
-
-internal sealed class AssessmentBatchResult
-{
-    public string Status { get; set; } = string.Empty;
-    public string Grade { get; set; } = string.Empty;
-    public int OverallScore { get; set; }
-}
+return await BatchAssessmentRunner.RunAsync(httpClient, domains, Console.Out, Console.Error);
