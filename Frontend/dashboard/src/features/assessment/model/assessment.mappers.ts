@@ -224,18 +224,6 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
 
   const headersPercent = modulePercent(headers.overallScore, headers.maxScore)
   const headersGrade = gradeFromPercent(headersPercent)
-  const observatoryStatusLine =
-    headers.observatory.grade && headers.observatory.grade !== 'UNAVAILABLE'
-      ? `Observatory grade ${headers.observatory.grade} (${headers.observatory.score}/100)`
-      : undefined
-
-  const headersBullet =
-    headers.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))?.message ||
-    headers.alerts[0]?.message ||
-    headers.criteria.strictTransportSecurity.details
-
-  const headersCallout = headers.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
-
   const emailIncluded = assessment.emailModuleIncluded
   const emailUnavailable = email.status.toUpperCase() === 'ERROR'
 
@@ -342,19 +330,13 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
       moduleGrade: headersGrade,
       moduleApiStatus: headers.status,
       scoreFill: { current: headers.overallScore, max: headers.maxScore },
-      statusLine: observatoryStatusLine,
       facts: [
         { label: 'HSTS', value: hstsVal, tone: toneHeaderPresence(hstsVal) },
         { label: 'CSP', value: cspVal, tone: toneHeaderPresence(cspVal) },
         { label: 'Risk', value: headersRisk, tone: toneRisk(headersRisk) },
       ],
-      bullet: hideBulletIfSameAsCallout(
-        headersBullet ? `• ${headersBullet}` : undefined,
-        headersCallout?.message,
-      ),
-      callout: headersCallout
-        ? { message: headersCallout.message, tone: 'critical' }
-        : undefined,
+      bullet: undefined,
+      callout: undefined,
     },
     {
       key: 'email',

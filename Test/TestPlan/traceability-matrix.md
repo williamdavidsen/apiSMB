@@ -10,3 +10,7 @@
 | REQ-006 Final score reweights when e-mail is not applicable | R-005 | TC-ASSESS-001 | Unit | Decision table | Yes |
 | REQ-007 Grades follow score thresholds | R-006 | TC-FE-SCORE-001 | Frontend unit | Boundary value analysis | Yes |
 | REQ-008 User can complete scan flow | R-007 | TC-E2E-001 | E2E | Use case testing | Yes |
+| REQ-009 Final score reweights when reputation data is unavailable | R-005 | TC-ASSESS-004 | Unit | Decision table | Yes |
+| REQ-010 Assessment grades and statuses respect backend threshold boundaries | R-006 | TC-ASSESS-005 | Unit | Boundary value analysis | Yes |
+| REQ-011 Assessment response normalizes submitted domains | R-003 | TC-ASSESS-006 | Unit | Equivalence partitioning | Yes |
+| REQ-012 Critical TLS findings surface in the executive assessment summary | R-002 | TC-ASSESS-007 | Unit | Decision table | Yes |

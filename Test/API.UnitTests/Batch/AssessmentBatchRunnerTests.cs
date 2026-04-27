@@ -10,6 +10,24 @@ namespace API.UnitTests.Batch;
 public sealed class AssessmentBatchRunnerTests
 {
     [Fact]
+    public async Task RunAsync_WhenDomainListIsEmpty_ReturnsErrorCodeAndWritesMessage()
+    {
+        using var client = new HttpClient(new StubHttpMessageHandler((request, _) =>
+            Task.FromResult(HttpResponseFactory.Json(HttpStatusCode.OK, "{}", request.RequestUri))))
+        {
+            BaseAddress = new Uri("http://localhost:5555")
+        };
+        var output = new StringWriter();
+        var errors = new StringWriter();
+
+        var exitCode = await BatchAssessmentRunner.RunAsync(client, [], output, errors);
+
+        Assert.Equal(1, exitCode);
+        Assert.Equal(string.Empty, output.ToString());
+        Assert.Contains("did not contain any domains", errors.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task RunAsync_WhenAssessmentSucceeds_WritesCsvRow()
     {
         var handler = new StubHttpMessageHandler((request, _) =>

@@ -16,6 +16,26 @@ public sealed class AssessmentControllerIntegrationTests : IClassFixture<CustomW
     }
 
     [Fact]
+    public async Task PostCheck_WithValidRequest_ReturnsAssessmentPayload()
+    {
+        var response = await _client.PostAsJsonAsync("/api/assessment/check", new AssessmentCheckRequest
+        {
+            Domain = "example.com"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<AssessmentCheckResult>();
+
+        Assert.NotNull(body);
+        Assert.Equal("example.com", body.Domain);
+        Assert.Equal("PARTIAL", body.Status);
+        Assert.Equal("B", body.Grade);
+        Assert.Equal(80, body.OverallScore);
+        Assert.Contains(body.Alerts, alert => alert.Message.Contains("could not be completed reliably", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task GetCheck_WhenAssessmentIsPartial_ReturnsExpectedWarningSummary()
     {
         var response = await _client.GetAsync("/api/assessment/check/example.com");
