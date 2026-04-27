@@ -60,7 +60,7 @@ describe('assessment dashboard mappers', () => {
     expect(emailCard?.facts.every((fact) => fact.value === 'Unavailable')).toBe(true)
   })
 
-  it('uses internal header score for the visible module grade while keeping Observatory as context', () => {
+  it('uses internal header score for the visible module grade and shows the current success summary', () => {
     const bundle = createBundle()
     bundle.headers.overallScore = 10
     bundle.headers.maxScore = 10
@@ -70,7 +70,8 @@ describe('assessment dashboard mappers', () => {
     const headersCard = buildModuleCards(bundle).find((card) => card.key === 'http-headers')
 
     expect(headersCard?.moduleGrade).toBe('A')
-    expect(headersCard?.statusLine).toContain('Observatory grade B')
+    expect(headersCard?.statusLine).toBeUndefined()
+    expect(headersCard?.bullet).toContain('Strong HSTS, CSP, and clickjacking protections were detected in this scan.')
   })
 })
 

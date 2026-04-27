@@ -129,8 +129,8 @@ These values are not valid frontend domain inputs and should be used to verify v
 |---|---|
 | Empty string | Required field validation |
 | `example` | Missing top-level domain |
-| `http://example.com` | Frontend should reject protocol input |
-| `https://example.com` | Frontend should reject protocol input |
+| `http://example.com` | Frontend should normalize protocol input to the host/domain |
+| `https://example.com` | Frontend should normalize protocol input to the host/domain |
 | `example..com` | Invalid dot placement |
 | `.example.com` | Invalid leading dot |
 | `example.com/scan` | Path should not be accepted as domain input |

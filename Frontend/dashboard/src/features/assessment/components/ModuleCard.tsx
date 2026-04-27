@@ -196,50 +196,52 @@ export function ModuleCard({
           ))}
         </Stack>
 
-        {bullet ? (
-          <Box
-            sx={(theme) => ({
-              pl: 1.5,
-              py: 1,
-              borderLeft: '3px solid',
-              borderColor: 'divider',
-              bgcolor: alpha(theme.palette.text.primary, 0.04),
-              borderRadius: 1,
-            })}
-          >
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {bullet}
-            </Typography>
-          </Box>
-        ) : null}
-
-        {callout ? (
-          <Box
-            sx={(theme) => ({
-              borderLeft: '4px solid',
-              borderColor: calloutBorder,
-              bgcolor: alpha(
-                callout.tone === 'critical'
-                  ? theme.palette.error.main
-                  : callout.tone === 'warning'
-                    ? theme.palette.warning.main
-                    : theme.palette.info.main,
-                0.08,
-              ),
-              p: 1.25,
-              borderRadius: 1,
-            })}
-          >
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-              {calloutIcon}
-              <Typography variant="body2" sx={{ color: 'text.primary', flex: 1 }}>
-                {callout.message}
+        <Stack spacing={1.25} sx={{ mt: 'auto', pt: 1 }}>
+          {bullet ? (
+            <Box
+              sx={(theme) => ({
+                pl: 1.5,
+                py: 1,
+                borderLeft: '3px solid',
+                borderColor: 'divider',
+                bgcolor: alpha(theme.palette.text.primary, 0.04),
+                borderRadius: 1,
+              })}
+            >
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {bullet}
               </Typography>
-            </Stack>
-          </Box>
-        ) : null}
+            </Box>
+          ) : null}
 
-        <Box sx={{ mt: 'auto', pt: 1 }}>
+          {callout ? (
+            <Box
+              sx={(theme) => ({
+                borderLeft: '4px solid',
+                borderColor: calloutBorder,
+                bgcolor: alpha(
+                  callout.tone === 'critical'
+                    ? theme.palette.error.main
+                    : callout.tone === 'warning'
+                      ? theme.palette.warning.main
+                      : theme.palette.info.main,
+                  0.08,
+                ),
+                p: 1.25,
+                borderRadius: 1,
+              })}
+            >
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
+                {calloutIcon}
+                <Typography variant="body2" sx={{ color: 'text.primary', flex: 1 }}>
+                  {callout.message}
+                </Typography>
+              </Stack>
+            </Box>
+          ) : null}
+        </Stack>
+
+        <Box sx={{ pt: 1 }}>
           <Link
             component={RouterLink}
             to={readMoreTo}

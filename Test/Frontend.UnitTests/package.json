@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --pool=threads",
+    "test:watch": "vitest --pool=threads"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",

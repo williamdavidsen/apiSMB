@@ -149,6 +149,11 @@ export type ModuleCardView = {
   callout?: { message: string; tone: 'critical' | 'warning' | 'info' }
 }
 
+type ModuleCardSummary = {
+  bullet?: string
+  callout?: { message: string; tone: 'critical' | 'warning' | 'info' }
+}
+
 /** Avoid grey bullet + colored callout showing the same API line. */
 function hideBulletIfSameAsCallout(
   bulletWithPrefix: string | undefined,
@@ -198,6 +203,78 @@ function toneReputationVerdict(value: string): ModuleFactTone {
   return 'neutral'
 }
 
+function isObservatoryOnlyHeaderAlert(message: string): boolean {
+  const text = message.trim().toLowerCase()
+  return text.includes('mozilla observatory')
+}
+
+function headerPositiveSummary(headers: AssessmentDashboardBundle['headers']): string {
+  const hasStrongHsts = headers.criteria.strictTransportSecurity.score >= 3
+  const hasStrongCsp = headers.criteria.contentSecurityPolicy.score >= 4
+  const hasClickjackingProtection = headers.criteria.clickjackingProtection.score >= 3
+
+  if (hasStrongHsts && hasStrongCsp && hasClickjackingProtection) {
+    return 'Strong HSTS, CSP, and clickjacking protections were detected in this scan.'
+  }
+
+  if (hasStrongHsts && hasStrongCsp) {
+    return 'Core browser-facing protections, including HSTS and CSP, were detected in this scan.'
+  }
+
+  if (hasStrongCsp) {
+    return 'Content Security Policy was detected and no major browser-side header weakness was identified.'
+  }
+
+  return 'Core HTTP security headers were detected in this scan.'
+}
+
+function pickHeaderSummary(headers: AssessmentDashboardBundle['headers']): ModuleCardSummary {
+  const status = headers.status.trim().toUpperCase()
+  const rankedAlert = [...headers.alerts]
+    .filter((alert) => !isObservatoryOnlyHeaderAlert(alert.message))
+    .sort((a, b) => alertRank(a.type) - alertRank(b.type))[0]
+
+  if (rankedAlert && alertRank(rankedAlert.type) <= 2) {
+    return {
+      callout: {
+        message: rankedAlert.message,
+        tone: alertRank(rankedAlert.type) <= 1 ? 'critical' : 'warning',
+      },
+    }
+  }
+
+  if (status === 'ERROR') {
+    return {
+      callout: {
+        message: rankedAlert?.message || 'HTTP header analysis could not be completed reliably.',
+        tone: 'warning',
+      },
+    }
+  }
+
+  if (status === 'FAIL') {
+    return {
+      callout: {
+        message: rankedAlert?.message || 'Critical HTTP security headers were missing or the target was not served over HTTPS.',
+        tone: 'critical',
+      },
+    }
+  }
+
+  if (status === 'WARNING') {
+    return {
+      callout: {
+        message: rankedAlert?.message || 'Some recommended HTTP security headers were missing or configured more weakly than recommended.',
+        tone: 'warning',
+      },
+    }
+  }
+
+  return {
+    bullet: `• ${headerPositiveSummary(headers)}`,
+  }
+}
+
 export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardView[] {
   const { assessment, ssl, headers, email, reputation } = bundle
 
@@ -224,6 +301,7 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
 
   const headersPercent = modulePercent(headers.overallScore, headers.maxScore)
   const headersGrade = gradeFromPercent(headersPercent)
+  const headerSummary = pickHeaderSummary(headers)
   const emailIncluded = assessment.emailModuleIncluded
   const emailUnavailable = email.status.toUpperCase() === 'ERROR'
 
@@ -335,8 +413,8 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
         { label: 'CSP', value: cspVal, tone: toneHeaderPresence(cspVal) },
         { label: 'Risk', value: headersRisk, tone: toneRisk(headersRisk) },
       ],
-      bullet: undefined,
-      callout: undefined,
+      bullet: headerSummary.bullet,
+      callout: headerSummary.callout,
     },
     {
       key: 'email',
