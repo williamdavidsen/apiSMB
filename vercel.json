@@ -5,6 +5,10 @@
   "outputDirectory": "Frontend/dashboard/dist",
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://smb-security-api.onrender.com/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
