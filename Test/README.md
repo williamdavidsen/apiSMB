@@ -17,6 +17,12 @@ This folder is the testing workspace for the security assessment system. It is o
 
 ## Recommended Commands
 
+Quick summary:
+
+- `npm run dev` is for running the frontend application, not for running tests.
+- Frontend app setup is `cd .\Frontend`, then `npm run setup`, then `npm run dev`.
+- Use `npm run test:all` from the repository root to run the main automated test suite.
+
 From the repository root:
 
 ```powershell
@@ -46,6 +52,18 @@ Frontend coverage:
 ```powershell
 cd .\Test\Frontend.UnitTests
 npm run test:coverage
+```
+
+Run the main automated suite in one step from the repository root:
+
+```powershell
+.\run-tests.ps1
+```
+
+Or:
+
+```powershell
+npm run test:all
 ```
 
 Live validation helpers:

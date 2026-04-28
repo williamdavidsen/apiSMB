@@ -21,7 +21,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
-    pool: 'forks',
+    pool: 'threads',
     maxWorkers: 1,
     fileParallelism: false,
     coverage: {

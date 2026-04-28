@@ -2,6 +2,7 @@
   "name": "security-assessment-frontend",
   "private": true,
   "scripts": {
+    "setup": "npm --prefix dashboard install",
     "dev": "npm --prefix dashboard run dev",
     "build": "npm --prefix dashboard run build",
     "lint": "npm --prefix dashboard run lint",

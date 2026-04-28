@@ -36,6 +36,12 @@ The API exposes dedicated endpoints for each module and one combined assessment 
 
 ## Running the project
 
+Quick summary:
+
+- Start the API from `API`.
+- Run `npm run setup` once in `Frontend`, then start it with `npm run dev`.
+- Run all automated tests from the repository root with `npm run test:all`.
+
 From the `API` folder:
 
 ```powershell
@@ -54,12 +60,36 @@ OpenAPI JSON:
 http://localhost:1071/swagger/v1/swagger.json
 ```
 
-With the API running, open `Frontend/dashboard`, run `npm install` once, then `npm run dev` (typically `http://localhost:5173`). Vite proxies `/api` to `http://localhost:1071` in dev; override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development` if needed.
-
-You can also start both the API and Vite together from `Frontend/dashboard`:
+From the `Frontend` folder, install the dashboard dependencies once and then start the frontend:
 
 ```powershell
+cd .\Frontend
+npm run setup
 npm run dev
+```
+
+This starts the frontend dev server, usually on `http://localhost:5173`.
+
+With the API running, the frontend proxies `/api` requests to `http://localhost:1071` in dev. You can override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development`.
+
+If you want to run the dashboard directly from its own folder instead:
+
+```powershell
+cd .\Frontend\dashboard
+npm install
+npm run dev
+```
+
+Run the main automated test suite from the repository root:
+
+```powershell
+.\run-tests.ps1
+```
+
+Or use the npm shortcut from the repository root:
+
+```powershell
+npm run test:all
 ```
 
 ## Notes

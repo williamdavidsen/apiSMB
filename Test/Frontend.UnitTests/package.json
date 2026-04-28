@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.config.mjs",
-    "test:watch": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs --config vitest.config.mjs",
-    "test:coverage": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.coverage.config.mjs --coverage --coverage.provider=istanbul"
+    "test": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader native",
+    "test:watch": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs --config vitest.config.mjs --configLoader native",
+    "test:coverage": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.coverage.config.mjs --coverage --coverage.provider=istanbul --configLoader native"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",
