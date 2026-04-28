@@ -184,22 +184,7 @@ namespace SecurityAssessmentAPI.Services
 
         private static string NormalizeDomain(string domain)
         {
-            var trimmed = domain.Trim();
-
-            if (trimmed.Contains('@'))
-            {
-                var mailParts = trimmed.Split('@', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                trimmed = mailParts.Length > 1 ? mailParts[^1] : trimmed;
-            }
-
-            if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absoluteUri))
-            {
-                return absoluteUri.Host;
-            }
-
-            return trimmed.Replace("https://", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Replace("http://", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .TrimEnd('/');
+            return DomainInputSanitizer.NormalizeDomain(domain);
         }
 
         private static ReputationCheckResult CreateErrorResult(string domain, string message)

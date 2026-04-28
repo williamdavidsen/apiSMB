@@ -9,6 +9,7 @@ const fetchSslDetails = vi.fn()
 const fetchHeadersCheck = vi.fn()
 const fetchEmailCheck = vi.fn()
 const fetchReputationCheck = vi.fn()
+const exportElementAsPdf = vi.fn()
 
 vi.mock('../../../../Frontend/dashboard/src/features/assessment/services/assessment.api', () => ({
   fetchSslCheck: (...args: unknown[]) => fetchSslCheck(...args),
@@ -18,9 +19,14 @@ vi.mock('../../../../Frontend/dashboard/src/features/assessment/services/assessm
   fetchReputationCheck: (...args: unknown[]) => fetchReputationCheck(...args),
 }))
 
+vi.mock('../../../../Frontend/dashboard/src/features/module-detail/services/pdfExport', () => ({
+  exportElementAsPdf: (...args: unknown[]) => exportElementAsPdf(...args),
+}))
+
 describe('ModuleDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    exportElementAsPdf.mockResolvedValue(undefined)
   })
 
   it('shows a warning for invalid module routes', () => {
@@ -34,6 +40,18 @@ describe('ModuleDetailPage', () => {
 
     expect(screen.getByText('Missing domain in the URL.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /go to home/i })).toBeInTheDocument()
+  })
+
+  it('shows exact loading copy while the module request is pending', async () => {
+    const pending = createDeferred<EmailCheckResult>()
+    fetchEmailCheck.mockReturnValue(pending.promise)
+
+    renderWithModuleRoute('/dashboard/example.com/email')
+
+    expect(screen.getByText('Loading module details...')).toBeInTheDocument()
+
+    pending.resolve(createEmailErrorResult())
+    expect(await screen.findByText('E-mail security analysis')).toBeInTheDocument()
   })
 
   it('shows an error state when module data loading fails', async () => {
@@ -59,18 +77,19 @@ describe('ModuleDetailPage', () => {
     expect(screen.getByText('ERROR')).toBeInTheDocument()
   })
 
-  it('renders SSL details and background evidence when the detail endpoint succeeds', async () => {
+  it('renders SSL details and exact ASCII section labels when the detail endpoint succeeds', async () => {
     fetchSslCheck.mockResolvedValue(createSslResult())
     fetchSslDetails.mockResolvedValue(createSslDetailResult())
 
     renderWithModuleRoute('/dashboard/example.com/ssl-tls')
 
     expect(await screen.findByText('TLS / SSL analysis')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '<- Back to results' })).toBeInTheDocument()
     expect(screen.getByText('Domain overview')).toBeInTheDocument()
-    expect(screen.getByText('TLS-versjon')).toBeInTheDocument()
-    expect(screen.getByText('Sertifikatgyldighet')).toBeInTheDocument()
-    expect(screen.getByText('Krypteringsstyrke (Cipher Strength)')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /download report/i })).toBeInTheDocument()
+    expect(screen.getByText('TLS version')).toBeInTheDocument()
+    expect(screen.getByText('Certificate validity')).toBeInTheDocument()
+    expect(screen.getByText('Cipher strength')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Download report (PDF)' })).toBeInTheDocument()
 
     await waitFor(() => {
       expect(fetchSslDetails).toHaveBeenCalledWith('example.com', expect.any(AbortSignal))
@@ -81,18 +100,59 @@ describe('ModuleDetailPage', () => {
     expect(screen.getAllByText(/ecdsa-with-sha256/i).length).toBeGreaterThanOrEqual(1)
   })
 
-  it('exports the rendered report to PDF from the download button', async () => {
+  it('falls back to summary SSL data when the extended detail endpoint fails', async () => {
     fetchSslCheck.mockResolvedValue(createSslResult())
-    fetchSslDetails.mockResolvedValue(createSslDetailResult())
+    fetchSslDetails.mockRejectedValue(new Error('SSL detail endpoint timed out.'))
 
     renderWithModuleRoute('/dashboard/example.com/ssl-tls')
 
-    const button = await screen.findByRole('button', { name: /download report/i })
+    expect(await screen.findByText('TLS / SSL analysis')).toBeInTheDocument()
+    expect(
+      await screen.findByText(/extended ssl endpoint data could not be loaded/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Score 24/30')).toBeInTheDocument()
+    expect(screen.getByText('Grade B')).toBeInTheDocument()
+  })
+
+  it('exports the rendered report to PDF from the download button', async () => {
+    fetchSslCheck.mockResolvedValue(createSslResult())
+    fetchSslDetails.mockResolvedValue(createSslDetailResult())
+    const exportRequest = createDeferred<void>()
+    exportElementAsPdf.mockReturnValueOnce(exportRequest.promise)
+
+    renderWithModuleRoute('/dashboard/example.com/ssl-tls')
+
+    const button = await screen.findByRole('button', { name: 'Download report (PDF)' })
     fireEvent.click(button)
 
+    expect(await screen.findByRole('button', { name: 'Preparing PDF...' })).toBeDisabled()
+
+    exportRequest.resolve()
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /preparing pdf/i })).toBeDisabled()
+      expect(exportElementAsPdf).toHaveBeenCalledWith(expect.any(HTMLDivElement), 'read-more-ssl-tls-example.com.pdf')
     })
+  })
+
+  it('keeps the page usable when PDF export fails', async () => {
+    fetchSslCheck.mockResolvedValue(createSslResult())
+    fetchSslDetails.mockResolvedValue(createSslDetailResult())
+    const exportRequest = createDeferred<void>()
+    exportElementAsPdf.mockReturnValueOnce(exportRequest.promise)
+
+    renderWithModuleRoute('/dashboard/example.com/ssl-tls')
+
+    const button = await screen.findByRole('button', { name: 'Download report (PDF)' })
+    fireEvent.click(button)
+
+    expect(await screen.findByRole('button', { name: 'Preparing PDF...' })).toBeDisabled()
+
+    exportRequest.reject(new Error('Canvas rendering failed.'))
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Download report (PDF)' })).toBeEnabled()
+    })
+
+    expect(screen.getByText('TLS / SSL analysis')).toBeInTheDocument()
+    expect(exportElementAsPdf).toHaveBeenCalledOnce()
   })
 })
 
@@ -108,6 +168,17 @@ function renderWithRoute(path: string, initialEntry: string) {
       </Routes>
     </MemoryRouter>,
   )
+}
+
+function createDeferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((innerResolve, innerReject) => {
+    resolve = innerResolve
+    reject = innerReject
+  })
+
+  return { promise, resolve, reject }
 }
 
 function createEmailErrorResult(): EmailCheckResult {
@@ -145,7 +216,7 @@ function createSslResult(): SslCheckResult {
     maxScore: 30,
     status: 'WARNING',
     criteria: {
-      tlsVersion: { score: 7, details: 'TLS 1.2 and TLS 1.3 supported' },
+      tlsVersion: { score: 7, details: 'Supported TLS versions: TLS 1.2, TLS 1.3' },
       certificateValidity: { score: 8, details: 'Certificate is currently valid.' },
       remainingLifetime: { score: 5, details: '90 days remaining' },
       cipherStrength: { score: 4, details: 'TLS_AES_256_GCM_SHA384 (256 bits)' },

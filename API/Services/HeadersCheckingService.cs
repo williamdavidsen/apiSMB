@@ -353,16 +353,7 @@ namespace SecurityAssessmentAPI.Services
 
         private static string NormalizeDomain(string domain)
         {
-            var trimmed = domain.Trim();
-
-            if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absoluteUri))
-            {
-                return absoluteUri.Host;
-            }
-
-            return trimmed.Replace("https://", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Replace("http://", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .TrimEnd('/');
+            return DomainInputSanitizer.NormalizeDomain(domain);
         }
 
         private static List<string> GetUnsafeCspDirectives(string cspValue)

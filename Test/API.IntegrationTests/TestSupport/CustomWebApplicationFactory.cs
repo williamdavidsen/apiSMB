@@ -50,9 +50,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         public Task<HeadersCheckResult> CheckHeadersAsync(string domain, CancellationToken cancellationToken = default)
         {
             ThrowIfRequested(domain);
+            var normalizedDomain = NormalizeDomainForStub(domain);
             return Task.FromResult(new HeadersCheckResult
             {
-                Domain = domain,
+                Domain = normalizedDomain,
                 OverallScore = 10,
                 Status = "PASS"
             });
@@ -64,9 +65,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         public Task<SslCheckResult> CheckSslAsync(string domain, CancellationToken cancellationToken = default)
         {
             ThrowIfRequested(domain);
+            var normalizedDomain = NormalizeDomainForStub(domain);
             return Task.FromResult(new SslCheckResult
             {
-                Domain = domain,
+                Domain = normalizedDomain,
                 OverallScore = 24,
                 Status = "WARNING"
             });
@@ -75,9 +77,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         public Task<SslDetailResult> GetSslDetailsAsync(string domain, CancellationToken cancellationToken = default)
         {
             ThrowIfRequested(domain);
+            var normalizedDomain = NormalizeDomainForStub(domain);
             return Task.FromResult(new SslDetailResult
             {
-                Domain = domain,
+                Domain = normalizedDomain,
                 OverallScore = 24,
                 Status = "WARNING",
                 DataSource = "DIRECT_TLS",
@@ -98,9 +101,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         public Task<EmailCheckResult> CheckEmailAsync(string domain, CancellationToken cancellationToken = default)
         {
             ThrowIfRequested(domain);
+            var normalizedDomain = NormalizeDomainForStub(domain);
             return Task.FromResult(new EmailCheckResult
             {
-                Domain = domain,
+                Domain = normalizedDomain,
                 HasMailService = false,
                 ModuleApplicable = true,
                 Status = "ERROR",
@@ -121,9 +125,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         public Task<ReputationCheckResult> CheckReputationAsync(string domain, CancellationToken cancellationToken = default)
         {
             ThrowIfRequested(domain);
+            var normalizedDomain = NormalizeDomainForStub(domain);
             return Task.FromResult(new ReputationCheckResult
             {
-                Domain = domain,
+                Domain = normalizedDomain,
                 OverallScore = 12,
                 Status = "WARNING",
                 Summary = new ReputationSummary
@@ -147,9 +152,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         public Task<PqcCheckResult> CheckPqcAsync(string domain, CancellationToken cancellationToken = default)
         {
             ThrowIfRequested(domain);
+            var normalizedDomain = NormalizeDomainForStub(domain);
             return Task.FromResult(new PqcCheckResult
             {
-                Domain = domain,
+                Domain = normalizedDomain,
                 Status = "INFO",
                 ReadinessLevel = "Unknown / not verifiable",
                 Mode = "Classical TLS with modern groups",
@@ -163,9 +169,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         public Task<AssessmentCheckResult> CheckAssessmentAsync(string domain, CancellationToken cancellationToken = default)
         {
             ThrowIfRequested(domain);
+            var normalizedDomain = NormalizeDomainForStub(domain);
             return Task.FromResult(new AssessmentCheckResult
             {
-                Domain = domain,
+                Domain = normalizedDomain,
                 OverallScore = 80,
                 Status = "PARTIAL",
                 Grade = "B",
@@ -187,5 +194,22 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         {
             throw new InvalidOperationException("Simulated service failure.");
         }
+    }
+
+    private static string NormalizeDomainForStub(string domain)
+    {
+        var trimmed = domain.Trim()
+            .Trim('\'', '"', '`', '<', '>', '(', ')', '[', ']')
+            .TrimEnd('/', '.');
+
+        var withoutScheme = trimmed.Replace("https://", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("http://", string.Empty, StringComparison.OrdinalIgnoreCase);
+        var withoutPath = withoutScheme.Split(['/', '?', '#'], 2, StringSplitOptions.None)[0];
+        var withoutCredentials = withoutPath.Split('@').LastOrDefault() ?? string.Empty;
+        var withoutPort = withoutCredentials.Split(':', 2, StringSplitOptions.None)[0];
+
+        return withoutPort.Trim()
+            .Trim('\'', '"', '`', '<', '>', '(', ')', '[', ']')
+            .TrimEnd('/', '.');
     }
 }

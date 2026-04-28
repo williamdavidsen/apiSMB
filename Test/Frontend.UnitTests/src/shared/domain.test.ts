@@ -15,4 +15,11 @@ describe('domain utilities', () => {
     expect(isValidDomain('example..com')).toBe(false)
     expect(isValidDomain('example!.com')).toBe(false)
   })
+
+  it('strips credentials and ports but rejects script-like or malformed hosts', () => {
+    expect(normalizeDomainInput('https://admin:secret@portal.example.com:8443/login')).toBe('portal.example.com')
+    expect(isValidDomain('javascript:alert(1)')).toBe(false)
+    expect(isValidDomain('<script>alert(1)</script>.example')).toBe(false)
+    expect(isValidDomain('http://exa mple.com')).toBe(false)
+  })
 })

@@ -27,6 +27,7 @@ import {
   fetchSslCheck,
 } from '../features/assessment/services/assessment.api'
 import { isHeaderControlMissingOrWeak } from '../features/assessment/model/assessment.mappers'
+import { exportElementAsPdf } from '../features/module-detail/services/pdfExport'
 import { routes } from '../shared/constants/routes'
 import { normalizeDomainInput } from '../shared/lib/domain'
 import { gradeFromPercent, modulePercent } from '../shared/lib/score'
@@ -37,6 +38,7 @@ type LoadedData = {
   moduleKey: DashboardModuleKey
   modulePayload: ModulePayload
   sslDetails?: SslDetailResult
+  sslDetailsStatus?: 'loading' | 'ready' | 'unavailable'
   loadedAtIso: string
 }
 
@@ -125,6 +127,7 @@ export function ModuleDetailPage() {
           data: {
             moduleKey: moduleKey as DashboardModuleKey,
             modulePayload,
+            sslDetailsStatus: moduleKey === 'ssl-tls' ? 'loading' : undefined,
             loadedAtIso: new Date().toISOString(),
           },
         })
@@ -141,13 +144,25 @@ export function ModuleDetailPage() {
                       data: {
                         ...prev.data,
                         sslDetails,
+                        sslDetailsStatus: 'ready',
                       },
                     }
                   : prev,
               )
             })
             .catch(() => {
-              // Keep the page usable even if extended SSL detail data is unavailable.
+              if (controller.signal.aborted) return
+              setState((prev) =>
+                prev.status === 'success' && prev.data.moduleKey === 'ssl-tls'
+                  ? {
+                      status: 'success',
+                      data: {
+                        ...prev.data,
+                        sslDetailsStatus: 'unavailable',
+                      },
+                    }
+                  : prev,
+              )
             })
         }
       } catch (error) {
@@ -170,35 +185,8 @@ export function ModuleDetailPage() {
 
     setIsDownloadingPdf(true)
     try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
-      const canvas = await html2canvas(printableRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      })
-
-      const imageData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-      const margin = 10
-      const contentWidth = pageWidth - margin * 2
-      const imageHeight = (canvas.height * contentWidth) / canvas.width
-
-      let remainingHeight = imageHeight
-      let yOffset = 0
-      pdf.addImage(imageData, 'PNG', margin, margin, contentWidth, imageHeight)
-      remainingHeight -= pageHeight - margin * 2
-
-      while (remainingHeight > 0) {
-        yOffset += pageHeight - margin * 2
-        pdf.addPage()
-        pdf.addImage(imageData, 'PNG', margin, margin - yOffset, contentWidth, imageHeight)
-        remainingHeight -= pageHeight - margin * 2
-      }
-
       const safeDomain = domain.replace(/[^a-z0-9.-]/gi, '_')
-      pdf.save(`read-more-${moduleKey}-${safeDomain}.pdf`)
+      await exportElementAsPdf(printableRef.current, `read-more-${moduleKey}-${safeDomain}.pdf`)
     } catch {
       // Keep the detail page usable even if client-side PDF export fails.
     } finally {
@@ -233,7 +221,7 @@ export function ModuleDetailPage() {
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }} role="status" aria-live="polite">
         <Stack spacing={2} sx={{ alignItems: 'center' }}>
           <CircularProgress aria-label="Loading module details" />
-          <Typography color="text.secondary">Loading module details…</Typography>
+          <Typography color="text.secondary">Loading module details...</Typography>
         </Stack>
       </Box>
     )
@@ -260,7 +248,7 @@ export function ModuleDetailPage() {
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }} role="status" aria-live="polite">
         <Stack spacing={2} sx={{ alignItems: 'center' }}>
           <CircularProgress aria-label="Switching module details" />
-          <Typography color="text.secondary">Switching module details…</Typography>
+          <Typography color="text.secondary">Switching module details...</Typography>
         </Stack>
       </Box>
     )
@@ -274,7 +262,7 @@ export function ModuleDetailPage() {
       <Stack spacing={2.5}>
         <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5 }}>
           <Button variant="text" color="secondary" onClick={backToDashboard} sx={{ alignSelf: 'flex-start', fontWeight: 800 }}>
-            ← Back to results
+            {'<- Back to results'}
           </Button>
           <Button
             variant="outlined"
@@ -284,7 +272,7 @@ export function ModuleDetailPage() {
             disabled={isDownloadingPdf}
             sx={{ fontWeight: 700 }}
           >
-            {isDownloadingPdf ? 'Preparing PDF…' : 'Download report (PDF)'}
+            {isDownloadingPdf ? 'Preparing PDF...' : 'Download report (PDF)'}
           </Button>
         </Stack>
 
@@ -354,7 +342,7 @@ export function ModuleDetailPage() {
                   {narrative.moduleTitle} deep dive
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  • scanned {formatDateTime(state.data.loadedAtIso)}
+                  - scanned {formatDateTime(state.data.loadedAtIso)}
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
@@ -376,7 +364,7 @@ export function ModuleDetailPage() {
                 state.data.modulePayload as SslCheckResult,
                 state.data.sslDetails,
               )}
-              isExtendedDataReady={Boolean(state.data.sslDetails)}
+              extendedDataState={state.data.sslDetailsStatus}
             />
           ) : null}
 
@@ -405,17 +393,24 @@ export function ModuleDetailPage() {
 
 function ReadMoreDetailCards({
   output,
-  isExtendedDataReady,
+  extendedDataState,
 }: {
   output: ReadMoreOutput
-  isExtendedDataReady?: boolean
+  extendedDataState?: 'loading' | 'ready' | 'unavailable'
 }) {
   return (
     <Stack spacing={2}>
-      {isExtendedDataReady === false ? (
+      {extendedDataState === 'loading' ? (
         <Alert severity="info">
           Extended SSL endpoint data is still loading. The page will fill in certificate and cipher details when the
           API response arrives.
+        </Alert>
+      ) : null}
+
+      {extendedDataState === 'unavailable' ? (
+        <Alert severity="warning">
+          Extended SSL endpoint data could not be loaded. The page is using the summary response and keeping the report
+          available with reduced detail.
         </Alert>
       ) : null}
 
@@ -647,7 +642,7 @@ function buildSslReadMoreOutput(
     ],
     criteria: [
       {
-        title: 'TLS-versjon',
+        title: 'TLS version',
         fields: [
           { pdfSubject: 'TLS 1.3', value: hasTlsVersion(sslDetails, 'TLS 1.3', data.criteria.tlsVersion.details) },
           { pdfSubject: 'TLS 1.2', value: hasTlsVersion(sslDetails, 'TLS 1.2', data.criteria.tlsVersion.details) },
@@ -656,7 +651,7 @@ function buildSslReadMoreOutput(
         ],
       },
       {
-        title: 'Sertifikatgyldighet',
+        title: 'Certificate validity',
         fields: [
           { pdfSubject: 'Valid from', value: formatReadMoreDate(certificate?.validFrom) },
           { pdfSubject: 'Valid until', value: formatReadMoreDate(certificate?.validUntil) },
@@ -665,7 +660,7 @@ function buildSslReadMoreOutput(
         ],
       },
       {
-        title: 'Krypteringsstyrke (Cipher Strength)',
+        title: 'Cipher strength',
         fields: [
           ...cipherFields,
           { pdfSubject: 'Forward Secrecy', value: ciphers.some((cipher) => cipher.toUpperCase().includes('ECDHE')) ? 'Yes' : 'Not provided by API' },
@@ -681,7 +676,7 @@ function buildEmailReadMoreOutput(data: EmailCheckResult): ReadMoreOutput {
   return {
     criteria: [
       {
-        title: 'SPF-verifisering',
+        title: 'SPF verification',
         fields: [
           { pdfSubject: 'Confidence', value: data.criteria.spfVerification.confidence },
           { pdfSubject: 'Details', value: fallback(data.criteria.spfVerification.details) },
@@ -691,7 +686,7 @@ function buildEmailReadMoreOutput(data: EmailCheckResult): ReadMoreOutput {
         ],
       },
       {
-        title: 'DKIM aktivert',
+        title: 'DKIM activated',
         fields: [
           { pdfSubject: 'Confidence', value: data.criteria.dkimActivated.confidence },
           { pdfSubject: 'Details', value: fallback(data.criteria.dkimActivated.details) },
@@ -751,7 +746,7 @@ function buildReputationReadMoreOutput(data: ReputationCheckResult): ReadMoreOut
     ],
     criteria: [
       {
-        title: 'Svartelistestatus',
+        title: 'Blacklist status',
         fields: [
           { pdfSubject: 'Malicious detections', value: `${data.summary.maliciousDetections}` },
           { pdfSubject: 'Suspicious detections', value: `${data.summary.suspiciousDetections}` },
@@ -759,7 +754,7 @@ function buildReputationReadMoreOutput(data: ReputationCheckResult): ReadMoreOut
         ],
       },
       {
-        title: 'Malware-tilknytning',
+        title: 'Malware association',
         fields: [
           { pdfSubject: 'Malicious detections', value: `${data.summary.maliciousDetections}` },
           { pdfSubject: 'Community malicious votes', value: `${data.summary.communityMaliciousVotes}` },
@@ -767,7 +762,7 @@ function buildReputationReadMoreOutput(data: ReputationCheckResult): ReadMoreOut
         ],
       },
       {
-        title: 'Tidligere kompromittering',
+        title: 'Historical compromise signals',
         fields: [
           { pdfSubject: 'Malicious detections', value: `${data.summary.maliciousDetections}` },
           { pdfSubject: 'Suspicious detections', value: `${data.summary.suspiciousDetections}` },
@@ -871,7 +866,7 @@ function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, s
       moduleTitle: 'E-mail security analysis',
       score: data.overallScore,
       maxScore: data.maxScore,
-      moduleGrade: moduleScored ? gradeFromPercent(modulePercent(data.overallScore, data.maxScore)) : '—',
+      moduleGrade: moduleScored ? gradeFromPercent(modulePercent(data.overallScore, data.maxScore)) : 'N/A',
       status: data.status,
       summary: [
         moduleErrored
