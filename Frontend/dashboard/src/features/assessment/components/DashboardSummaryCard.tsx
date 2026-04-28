@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import type { AssessmentUiStatus } from '../../../shared/lib/status'
 import type { AssessmentModuleScores } from '../model/assessment.types'
+import { shadows } from '../../../styles/designTokens'
 import { StatusChip } from './StatusChip'
 
 type DashboardSummaryCardProps = {
@@ -96,7 +97,7 @@ export function DashboardSummaryCard({
         p: { xs: 2.5, md: 3.5 },
         borderRadius: 2,
         borderColor: 'divider',
-        boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 18px rgba(15, 23, 42, 0.07)',
+        boxShadow: shadows.cardSoftRaised,
       }}
     >
       <Stack spacing={2.5}>
@@ -202,8 +203,8 @@ export function DashboardSummaryCard({
                         display: 'grid',
                         width: 'max-content',
                         maxWidth: '100%',
-                        gridTemplateColumns: { xs: 'minmax(0, 220px) minmax(0, auto)', md: '220px auto' },
-                        gridTemplateRows: 'auto auto',
+                        gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 220px) minmax(0, auto)', md: '220px auto' },
+                        gridTemplateRows: { xs: 'auto auto auto', sm: 'auto auto' },
                         columnGap: { xs: 2, md: 3 },
                         rowGap: 1,
                         alignItems: 'center',
@@ -223,9 +224,9 @@ export function DashboardSummaryCard({
                       <Stack
                         spacing={0.6}
                         sx={{
-                          gridColumn: 2,
-                          gridRow: 1,
-                          alignItems: 'flex-start',
+                          gridColumn: { xs: 1, sm: 2 },
+                          gridRow: { xs: 2, sm: 1 },
+                          alignItems: { xs: 'center', sm: 'flex-start' },
                           alignSelf: 'center',
                         }}
                       >
@@ -251,7 +252,7 @@ export function DashboardSummaryCard({
                         variant="caption"
                         sx={{
                           gridColumn: 1,
-                          gridRow: 2,
+                          gridRow: { xs: 3, sm: 2 },
                           width: '100%',
                           maxWidth: 220,
                           justifySelf: 'center',
@@ -339,13 +340,13 @@ function PieBreakdownChart({
     <Box
       sx={{
         position: 'relative',
-        width: size,
-        height: size,
+        width: { xs: 190, sm: size },
+        height: { xs: 190, sm: size },
         flexShrink: 0,
         alignSelf: { xs: 'center', lg: 'flex-start' },
       }}
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Overall security score ${totalScore} out of ${maxScore}`}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Overall security score ${totalScore} out of ${maxScore}`}>
         {segments.map((segment) => {
           const share = segment.included ? Math.max(0, segment.value) / total : 0
           const sweep = share * 360

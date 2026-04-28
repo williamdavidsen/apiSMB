@@ -14,8 +14,9 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { Link as RouterLink, NavLink, useLocation } from 'react-router-dom'
-import siteLogo from '../../assets/images/brand/site-logo.svg'
+import siteLogo from '../../assets/images/home/site-logo.svg'
 import { routes } from '../../shared/constants/routes'
+import { brandGradients } from '../../styles/designTokens'
 import { threatNavItems } from './SideNav'
 
 type TopBarProps = {
@@ -41,8 +42,7 @@ export function TopBar({ title }: TopBarProps) {
       aria-label={`Top navigation - ${title}`}
       sx={{
         color: 'primary.contrastText',
-        background:
-          'linear-gradient(105deg, #008fa1 0%, #00a6ba 45%, #007b88 100%)',
+        background: brandGradients.appBar,
         borderBottom: '1px solid',
         borderColor: 'rgba(0, 98, 115, 0.75)',
         width: '100%',

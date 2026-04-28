@@ -31,6 +31,7 @@ import { exportElementAsPdf } from '../features/module-detail/services/pdfExport
 import { routes } from '../shared/constants/routes'
 import { normalizeDomainInput } from '../shared/lib/domain'
 import { gradeFromPercent, modulePercent } from '../shared/lib/score'
+import { BulletList, SectionCard } from '../shared/ui/ContentBlocks'
 
 type ModulePayload = SslCheckResult | HeadersCheckResult | EmailCheckResult | ReputationCheckResult
 
@@ -262,7 +263,7 @@ export function ModuleDetailPage() {
       <Stack spacing={2.5}>
         <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5 }}>
           <Button variant="text" color="secondary" onClick={backToDashboard} sx={{ alignSelf: 'flex-start', fontWeight: 800 }}>
-            {'<- Back to results'}
+            {'← Back to results'}
           </Button>
           <Button
             variant="outlined"
@@ -468,29 +469,6 @@ function KeyValueRows({ rows }: { rows: ReadMoreField[] }) {
             {row.value}
           </Typography>
         </Box>
-      ))}
-    </Stack>
-  )
-}
-
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 3 }}>
-      <Typography variant="h6" sx={{ fontWeight: 900, color: 'secondary.dark', mb: 1.25 }}>
-        {title}
-      </Typography>
-      {children}
-    </Paper>
-  )
-}
-
-function BulletList({ items }: { items: string[] }) {
-  return (
-    <Stack component="ul" spacing={0.9} sx={{ m: 0, pl: 2.3 }}>
-      {items.map((item) => (
-        <Typography component="li" key={item} variant="body1" sx={{ lineHeight: 1.55 }}>
-          {item}
-        </Typography>
       ))}
     </Stack>
   )

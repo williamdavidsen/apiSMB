@@ -12,6 +12,7 @@ import { AlertBox } from '../features/assessment/components/AlertBox'
 import { DashboardSummaryCard } from '../features/assessment/components/DashboardSummaryCard'
 import { ModuleCardList } from '../features/assessment/components/ModuleCardList'
 import { PqcInsightModal } from '../features/assessment/components/PqcInsightModal'
+import { PqcOverviewCard } from '../features/assessment/components/PqcOverviewCard'
 import { useAssessmentDashboard } from '../features/assessment/hooks/useAssessmentDashboard'
 import {
   buildModuleCards,
@@ -67,11 +68,6 @@ export function SecurityDashboardPage() {
       pqcCloseTimerRef.current = null
     }, PQC_AUTO_CLOSE_MS)
   }, [clearPqcTimer])
-
-  const handleOpenPqcManual = useCallback(() => {
-    setPqcOpen(true)
-    schedulePqcAutoClose()
-  }, [schedulePqcAutoClose])
 
   const pqcSessionKey =
     state.status === 'success' ? `${state.data.assessment.domain}|${state.scannedAtIso}` : null
@@ -208,16 +204,6 @@ export function SecurityDashboardPage() {
           uiStatus={uiStatus}
           modules={data.assessment.modules}
           onTestAnother={() => navigate(routes.home)}
-          extraActions={
-            <Button
-              variant="text"
-              color="secondary"
-              onClick={handleOpenPqcManual}
-              sx={{ fontWeight: 800, color: 'secondary.dark' }}
-            >
-              Post-quantum insight
-            </Button>
-          }
         />
 
         {banner ? <AlertBox banner={banner} /> : null}
@@ -256,6 +242,11 @@ export function SecurityDashboardPage() {
         </Stack>
 
         <ModuleCardList domain={data.assessment.domain} cards={cards} />
+        <PqcOverviewCard
+          domain={data.assessment.domain}
+          pqc={data.assessment.pqcReadiness}
+          readMoreTo={`${routes.dashboard}/${encodeURIComponent(data.assessment.domain)}/pqc`}
+        />
       </Stack>
 
       <PqcInsightModal

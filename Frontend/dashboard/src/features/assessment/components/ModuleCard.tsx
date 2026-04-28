@@ -11,6 +11,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined'
 import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined'
 import { Link as RouterLink } from 'react-router-dom'
 import type { ModuleCardFact, ModuleFactTone } from '../model/assessment.mappers'
+import { shadows } from '../../../styles/designTokens'
 
 type ModuleCardProps = {
   title: string
@@ -85,7 +86,7 @@ export function ModuleCard({
         borderRadius: 2,
         overflow: 'hidden',
         borderColor: 'divider',
-        boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.07)',
+        boxShadow: shadows.cardSoft,
         transition: theme.transitions.create(['box-shadow'], { duration: 180 }),
         '&:hover': {
           boxShadow: '0 2px 4px rgba(15, 23, 42, 0.07), 0 8px 22px rgba(15, 23, 42, 0.09)',

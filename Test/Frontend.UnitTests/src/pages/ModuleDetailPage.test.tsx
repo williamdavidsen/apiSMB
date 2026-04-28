@@ -84,7 +84,7 @@ describe('ModuleDetailPage', () => {
     renderWithModuleRoute('/dashboard/example.com/ssl-tls')
 
     expect(await screen.findByText('TLS / SSL analysis')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '<- Back to results' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '← Back to results' })).toBeInTheDocument()
     expect(screen.getByText('Domain overview')).toBeInTheDocument()
     expect(screen.getByText('TLS version')).toBeInTheDocument()
     expect(screen.getByText('Certificate validity')).toBeInTheDocument()

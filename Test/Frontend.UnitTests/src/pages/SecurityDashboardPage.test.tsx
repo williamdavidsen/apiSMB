@@ -64,7 +64,9 @@ describe('SecurityDashboardPage', () => {
     expect(screen.getByText(/partial security assessment/i)).toBeInTheDocument()
     expect(screen.getByText(/e-mail security could not be evaluated reliably/i)).toBeInTheDocument()
     expect(screen.getByText('Could not evaluate')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /post-quantum insight/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /post-quantum insight/i })).not.toBeInTheDocument()
+    const readMoreLinks = screen.getAllByRole('link', { name: /read more/i })
+    expect(readMoreLinks.some((link) => link.getAttribute('href')?.includes('/dashboard/example.com/pqc'))).toBe(true)
 
     await waitFor(() => {
       expect(mockSaveLastScannedDomain).toHaveBeenCalledWith('example.com')

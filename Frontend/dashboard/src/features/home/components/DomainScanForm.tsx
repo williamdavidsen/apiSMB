@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { isValidDomain, normalizeDomainInput } from '../../../shared/lib/domain'
+import { brandGradients } from '../../../styles/designTokens'
 
 type DomainScanFormProps = {
   onSubmitDomain: (domain: string) => void
@@ -97,10 +98,10 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
               py: 1.2,
               mt: 0.5,
               color: '#ffffff',
-              bgcolor: 'secondary.main',
+              background: brandGradients.appBar,
               fontWeight: 800,
               '&:hover': {
-                bgcolor: 'secondary.dark',
+                background: brandGradients.appBarHover,
               },
             }}
           >

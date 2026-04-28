@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import { Outlet, useLocation } from 'react-router-dom'
-import homeBackground from '../../assets/images/home/background.png'
+import homeBackground from '../../assets/images/home/background.webp'
 import { routes } from '../../shared/constants/routes'
 import { Footer } from './Footer'
 import { SideNav } from './SideNav'

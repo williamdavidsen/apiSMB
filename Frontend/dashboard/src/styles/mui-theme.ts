@@ -69,13 +69,9 @@ export const appTheme = createTheme({
         root: {
           boxShadow: 'none !important',
           filter: 'none',
-          '&.MuiChip-filled': {
+          '&[class*="MuiChip-filled"]': {
             boxShadow: 'none !important',
           },
-          '&.MuiChip-filledSuccess': { boxShadow: 'none !important' },
-          '&.MuiChip-filledWarning': { boxShadow: 'none !important' },
-          '&.MuiChip-filledError': { boxShadow: 'none !important' },
-          '&.MuiChip-filledDefault': { boxShadow: 'none !important' },
         },
       },
     },
