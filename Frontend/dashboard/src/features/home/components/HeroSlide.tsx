@@ -47,7 +47,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
       sx={{
         position: 'relative',
         width: '100%',
-        height: { xs: 250, md: 320 },
+        height: { xs: 250, sm: 280, md: 320 },
         overflow: 'hidden',
         bgcolor: '#e9f7fa',
       }}
@@ -63,7 +63,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: { xs: 'left center', sm: 'center' },
+          objectPosition: { xs: 'center', md: 'left center' },
           transform: reducedMotion ? 'none' : isActive ? 'scale(1.02)' : 'scale(1)',
           transition: reducedMotion ? 'none' : 'transform 420ms ease-out',
           display: 'block',
@@ -76,8 +76,8 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
           height: '100%',
           display: 'flex',
           alignItems: 'center',
-          maxWidth: { xs: '64%', sm: '44%', md: 410 },
-          px: { xs: 2.6, md: 4.8 },
+          maxWidth: { xs: '56%', sm: '46%', md: 410 },
+          px: { xs: 2.2, sm: 3.2, md: 4.8 },
         }}
       >
         <Stack
@@ -85,7 +85,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
           sx={{
             alignItems: 'flex-start',
             width: '100%',
-            mt: { xs: -1.6, md: -1.2 },
+            mt: { xs: -1.1, sm: -1, md: -1.2 },
           }}
         >
           <Typography
@@ -93,7 +93,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
             sx={{
               color: '#18425d',
               fontWeight: 800,
-              fontSize: { xs: '1.57rem', md: '2.44rem' },
+              fontSize: { xs: '1.4rem', sm: '1.78rem', md: '2.44rem' },
               lineHeight: 1.08,
               letterSpacing: '-0.03em',
             }}
@@ -114,9 +114,9 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
           <Typography
             sx={{
               color: 'rgba(54, 79, 95, 0.9)',
-              fontSize: { xs: '0.99rem', md: '1.21rem' },
-              lineHeight: 1.48,
-              maxWidth: { xs: 208, md: 292 },
+              fontSize: { xs: '0.9rem', sm: '1rem', md: '1.21rem' },
+              lineHeight: { xs: 1.42, md: 1.48 },
+              maxWidth: { xs: 188, sm: 236, md: 292 },
             }}
           >
             {slide.description}
