@@ -48,6 +48,7 @@ Quick summary:
 
 - Start the API from `API`.
 - Run `npm run setup` once in `Frontend`, then start the dashboard with `npm run dev`.
+- Running `npm run dev` inside `Frontend` starts the frontend system at `http://localhost:5173/`.
 - Run the full automated suite with `npm run test:all` from either the repository root or `Test`.
 
 From the `API` folder:
