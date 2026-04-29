@@ -1,10 +1,10 @@
-# Security Assessment API for SMB Customers
+# Security Assessment Platform for SMB Customers
 
-This project is an ASP.NET Core API for assessing the security posture of a domain. It is built as a bachelor project and is designed to give small and medium-sized business customers a simple, structured security overview based on several technical checks.
+This project is a bachelor project centered on an ASP.NET Core security-assessment API and a React dashboard. It is designed to give small and medium-sized business customers a simple, structured overview of domain security based on several technical checks.
 
 ## What the project does
 
-The API evaluates a target domain and produces a combined assessment score with grades, statuses, module-level scoring, and alerts.
+The platform evaluates a target domain and produces a combined assessment score with grades, statuses, module-level scoring, alerts, and supporting detail views in the frontend dashboard.
 
 The current assessment includes:
 
@@ -14,16 +14,21 @@ The current assessment includes:
 - Reputation analysis
 - PQC readiness analysis
 
-## Main API modules
+## Main API endpoints
 
-The API exposes dedicated endpoints for each module and one combined assessment endpoint:
+The API exposes dedicated endpoints for each module, one combined assessment endpoint, and one SSL detail endpoint:
 
 - `/api/assessment/check/{domain}`
 - `/api/ssl/check/{domain}`
+- `/api/ssl/details/{domain}`
 - `/api/headers/check/{domain}`
 - `/api/email/check/{domain}`
 - `/api/reputation/check/{domain}`
 - `/api/pqc/check/{domain}`
+
+The API root route also responds at:
+
+- `/`
 
 ## Project structure
 
@@ -31,16 +36,19 @@ The API exposes dedicated endpoints for each module and one combined assessment 
 - `API/Services` contains the core assessment logic and external service clients
 - `API/DTOs` contains request and response models
 - `API/DAL` contains data access and repository code
-- `Test/AssessmentBatchRunner` contains a small batch runner for testing many domains
-- `Frontend/dashboard` contains the optional dashboard UI (React, TypeScript, Vite, Material UI)
+- `Frontend` contains convenience scripts that forward to the dashboard app
+- `Frontend/dashboard` contains the React, TypeScript, Vite, and Material UI dashboard
+- `Test` contains the test workspace, automation, manual-test assets, and reports
+- `Test/AssessmentBatchRunner` contains a small live batch validation tool
+- `Test/NonFunctional` contains load and resilience smoke scripts
 
 ## Running the project
 
 Quick summary:
 
 - Start the API from `API`.
-- Run `npm run setup` once in `Frontend`, then start it with `npm run dev`.
-- Run all automated tests from the repository root with `npm run test:all`.
+- Run `npm run setup` once in `Frontend`, then start the dashboard with `npm run dev`.
+- Run the full automated suite with `npm run test:all` from either the repository root or `Test`.
 
 From the `API` folder:
 
@@ -60,7 +68,7 @@ OpenAPI JSON:
 http://localhost:1071/swagger/v1/swagger.json
 ```
 
-From the `Frontend` folder, install the dashboard dependencies once and then start the frontend:
+From the `Frontend` folder, install the dashboard dependencies once and then start the dashboard:
 
 ```powershell
 cd .\Frontend
@@ -68,11 +76,11 @@ npm run setup
 npm run dev
 ```
 
-This starts the frontend dev server, usually on `http://localhost:5173`.
+This starts the dashboard dev server, usually on `http://localhost:5173`.
 
 With the API running, the frontend proxies `/api` requests to `http://localhost:1071` in dev. You can override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development`.
 
-If you want to run the dashboard directly from its own folder instead:
+If you want to work directly inside the dashboard app instead:
 
 ```powershell
 cd .\Frontend\dashboard
@@ -80,7 +88,7 @@ npm install
 npm run dev
 ```
 
-Run the main automated test suite from the repository root:
+Run the full automated test suite from the repository root:
 
 ```powershell
 .\run-tests.ps1
@@ -89,6 +97,13 @@ Run the main automated test suite from the repository root:
 Or use the npm shortcut from the repository root:
 
 ```powershell
+npm run test:all
+```
+
+You can also run the same combined suite from the `Test` folder:
+
+```powershell
+cd .\Test
 npm run test:all
 ```
 
@@ -101,7 +116,7 @@ The combined suite covers:
 - live batch validation in `Test/AssessmentBatchRunner`
 - non-functional smoke checks in `Test/NonFunctional`
 
-The following `Test` subfolders are documentation/manual assets and are not runnable by `npm run test:all`:
+The combined suite does not run the documentation/manual-only `Test` subfolders:
 
 - `Test/ManualTests`
 - `Test/Reports`
@@ -110,6 +125,7 @@ The following `Test` subfolders are documentation/manual assets and are not runn
 
 ## Notes
 
+- The backend uses an in-memory database configuration in the current app setup.
 - The project depends on external services and network-based checks.
 - Some modules use third-party APIs and HTTP/DNS lookups.
 - Output quality depends on network availability and the quality of upstream data sources.
