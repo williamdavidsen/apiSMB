@@ -142,11 +142,13 @@ namespace SecurityAssessmentAPI.Services
                 var remainingDays = (notAfter - now).TotalDays;
                 var totalValidityDays = (notAfter - notBefore).TotalDays;
                 var remoteIpAddress = (tcpClient.Client.RemoteEndPoint as IPEndPoint)?.Address?.ToString() ?? string.Empty;
+                var negotiatedCipherSuite = sslStream.NegotiatedCipherSuite;
+                var cipherSuiteDescription = GetCipherSuiteDescription(negotiatedCipherSuite);
 
                 var tlsScore = CalculateTlsScoreFromProtocol(sslStream.SslProtocol);
                 var certificateValidityScore = notBefore <= now && notAfter > now ? 4 : 0;
                 var remainingLifetimeScore = CalculateRemainingLifetimeScore(notBefore, notAfter);
-                var cipherScore = CalculateCipherScoreFromStrength(sslStream.CipherStrength);
+                var cipherScore = CalculateCipherScoreFromSuite(negotiatedCipherSuite);
 
                 var rawOverall = tlsScore + certificateValidityScore + remainingLifetimeScore + cipherScore;
 
@@ -183,7 +185,7 @@ namespace SecurityAssessmentAPI.Services
                         CipherStrength = new SslScoreDetail
                         {
                             Score = cipherScore,
-                            Details = $"Direct TLS probe observed cipher strength: {sslStream.CipherStrength} bits."
+                            Details = $"Direct TLS probe observed cipher suite: {cipherSuiteDescription}."
                         }
                     },
                     Alerts = new List<SslAlert>(),
@@ -198,7 +200,7 @@ namespace SecurityAssessmentAPI.Services
                     },
                     Certificate = CreateCertificateDetail(certificate, notBefore, notAfter),
                     SupportedTlsVersions = new List<string> { sslStream.SslProtocol.ToString() },
-                    NotableCipherSuites = new List<string> { $"{sslStream.CipherAlgorithm} ({sslStream.CipherStrength} bits)" }
+                    NotableCipherSuites = new List<string> { cipherSuiteDescription }
                 };
 
                 result.Alerts.Add(new SslAlert
@@ -732,15 +734,37 @@ namespace SecurityAssessmentAPI.Services
             {
                 SslProtocols.Tls13 => 10,
                 SslProtocols.Tls12 => 7,
-                SslProtocols.Tls11 => 4,
+                _ when protocol != SslProtocols.None => 4,
                 _ => 0
             };
 
-        private static int CalculateCipherScoreFromStrength(int cipherStrength)
+        private static int CalculateCipherScoreFromSuite(TlsCipherSuite cipherSuite)
         {
-            if (cipherStrength >= 256) return 10;
-            if (cipherStrength >= 128) return 7;
-            return cipherStrength > 0 ? 4 : 0;
+            if (cipherSuite == TlsCipherSuite.TLS_AES_256_GCM_SHA384 ||
+                cipherSuite == TlsCipherSuite.TLS_CHACHA20_POLY1305_SHA256 ||
+                cipherSuite == TlsCipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 ||
+                cipherSuite == TlsCipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 ||
+                cipherSuite == TlsCipherSuite.TLS_DHE_RSA_WITH_AES_256_GCM_SHA384)
+            {
+                return 10;
+            }
+
+            if (cipherSuite == TlsCipherSuite.TLS_AES_128_GCM_SHA256 ||
+                cipherSuite == TlsCipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 ||
+                cipherSuite == TlsCipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 ||
+                cipherSuite == TlsCipherSuite.TLS_DHE_RSA_WITH_AES_128_GCM_SHA256)
+            {
+                return 7;
+            }
+
+            return cipherSuite != 0 ? 4 : 0;
+        }
+
+        private static string GetCipherSuiteDescription(TlsCipherSuite cipherSuite)
+        {
+            return cipherSuite != 0
+                ? cipherSuite.ToString()
+                : "Unknown cipher suite";
         }
     }
 }

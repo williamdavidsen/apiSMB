@@ -1,11 +1,14 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace SecurityAssessmentAPI.Services
 {
     public class VirusTotalDomainReport
     {
         public string Domain { get; set; } = string.Empty;
+        public string ProviderStatus { get; set; } = "READY";
+        public string ProviderMessage { get; set; } = string.Empty;
         public int Reputation { get; set; }
         public int MaliciousDetections { get; set; }
         public int SuspiciousDetections { get; set; }
@@ -26,12 +29,15 @@ namespace SecurityAssessmentAPI.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _memoryCache;
         private readonly ILogger<VirusTotalClient> _logger;
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
 
-        public VirusTotalClient(HttpClient httpClient, IConfiguration configuration, ILogger<VirusTotalClient> logger)
+        public VirusTotalClient(HttpClient httpClient, IConfiguration configuration, IMemoryCache memoryCache, ILogger<VirusTotalClient> logger)
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _memoryCache = memoryCache;
             _logger = logger;
         }
 
@@ -41,7 +47,17 @@ namespace SecurityAssessmentAPI.Services
             if (string.IsNullOrWhiteSpace(apiKey))
             {
                 _logger.LogWarning("VirusTotal API key is not configured. Set VirusTotal:ApiKey or VirusTotal__ApiKey in the host environment.");
-                return null;
+                return CreateProviderUnavailableReport(domain, "VirusTotal API key is not configured.");
+            }
+
+            var cacheKey = $"virustotal-domain:{domain.ToLowerInvariant()}";
+            if (_memoryCache.TryGetValue<VirusTotalDomainReport>(cacheKey, out var cachedReport))
+            {
+                _logger.LogInformation("Using cached VirusTotal domain report: {Domain}", domain);
+                if (cachedReport != null)
+                {
+                    return CloneReport(cachedReport);
+                }
             }
 
             var url = $"https://www.virustotal.com/api/v3/domains/{Uri.EscapeDataString(domain)}";
@@ -62,23 +78,32 @@ namespace SecurityAssessmentAPI.Services
                     return new VirusTotalDomainReport
                     {
                         Domain = domain,
+                        ProviderStatus = "NOT_FOUND",
                         Permalink = $"https://www.virustotal.com/gui/domain/{domain}"
                     };
+                }
+
+                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                {
+                    _logger.LogWarning("VirusTotal quota or rate limit reached for domain: {Domain}", domain);
+                    return CreateProviderUnavailableReport(domain, "VirusTotal quota or rate limit was reached.", "RATE_LIMITED");
                 }
 
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogWarning("VirusTotal returned non-success status: Domain={Domain}, Status={StatusCode}, Body={Body}",
                         domain, (int)response.StatusCode, json);
-                    return null;
+                    return CreateProviderUnavailableReport(domain, $"VirusTotal returned HTTP {(int)response.StatusCode}.", "UNAVAILABLE");
                 }
 
-                return ParseDomainReport(json);
+                var parsedReport = ParseDomainReport(json);
+                _memoryCache.Set(cacheKey, CloneReport(parsedReport), CacheDuration);
+                return parsedReport;
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "VirusTotal request failed: {Domain}", domain);
-                return null;
+                return CreateProviderUnavailableReport(domain, "VirusTotal request failed.", "UNAVAILABLE");
             }
         }
 
@@ -112,6 +137,7 @@ namespace SecurityAssessmentAPI.Services
             return new VirusTotalDomainReport
             {
                 Domain = GetString(data, "id") ?? string.Empty,
+                ProviderStatus = "READY",
                 Reputation = GetInt32(attributes, "reputation"),
                 MaliciousDetections = GetInt32(stats, "malicious"),
                 SuspiciousDetections = GetInt32(stats, "suspicious"),
@@ -121,6 +147,36 @@ namespace SecurityAssessmentAPI.Services
                 CommunityHarmlessVotes = GetInt32(votes, "harmless"),
                 LastAnalysisDate = GetUnixDateTimeOffset(attributes, "last_analysis_date"),
                 Permalink = $"https://www.virustotal.com/gui/domain/{GetString(data, "id")}"
+            };
+        }
+
+        private static VirusTotalDomainReport CreateProviderUnavailableReport(string domain, string message, string providerStatus = "UNAVAILABLE")
+        {
+            return new VirusTotalDomainReport
+            {
+                Domain = domain,
+                ProviderStatus = providerStatus,
+                ProviderMessage = message,
+                Permalink = $"https://www.virustotal.com/gui/domain/{domain}"
+            };
+        }
+
+        private static VirusTotalDomainReport CloneReport(VirusTotalDomainReport report)
+        {
+            return new VirusTotalDomainReport
+            {
+                Domain = report.Domain,
+                ProviderStatus = report.ProviderStatus,
+                ProviderMessage = report.ProviderMessage,
+                Reputation = report.Reputation,
+                MaliciousDetections = report.MaliciousDetections,
+                SuspiciousDetections = report.SuspiciousDetections,
+                HarmlessDetections = report.HarmlessDetections,
+                UndetectedDetections = report.UndetectedDetections,
+                CommunityMaliciousVotes = report.CommunityMaliciousVotes,
+                CommunityHarmlessVotes = report.CommunityHarmlessVotes,
+                LastAnalysisDate = report.LastAnalysisDate,
+                Permalink = report.Permalink
             };
         }
 

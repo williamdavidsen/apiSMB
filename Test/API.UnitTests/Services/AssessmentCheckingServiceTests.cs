@@ -29,24 +29,24 @@ public sealed class AssessmentCheckingServiceTests
     }
 
     [Fact]
-    public async Task CheckAssessmentAsync_WhenReputationFailsToLoad_RebalancesWeightsAndMarksPartial()
+    public async Task CheckAssessmentAsync_WhenReputationIsTemporarilyUnavailable_RebalancesWeightsWithoutMarkingPartial()
     {
         var service = CreateService(
             ssl: new SslCheckResult { OverallScore = 24, MaxScore = 30, Status = "PASS" },
             headers: new HeadersCheckResult { OverallScore = 8, MaxScore = 10, Status = "PASS" },
             email: new EmailCheckResult { ModuleApplicable = true, HasMailService = true, OverallScore = 16, MaxScore = 20, Status = "PASS" },
-            reputation: new ReputationCheckResult { OverallScore = 0, MaxScore = 20, Status = "ERROR" });
+            reputation: new ReputationCheckResult { OverallScore = 0, MaxScore = 20, Status = "UNAVAILABLE", ProviderStatus = "UNAVAILABLE" });
 
         var result = await service.CheckAssessmentAsync("example.com");
 
-        Assert.Equal("PARTIAL", result.Status);
+        Assert.Equal("PASS", result.Status);
         Assert.Equal(43.75m, result.Weights.SslTls);
         Assert.Equal(31.25m, result.Weights.HttpHeaders);
         Assert.Equal(25m, result.Weights.EmailSecurity);
         Assert.Equal(0m, result.Weights.Reputation);
         Assert.False(result.Modules.Reputation.Included);
         Assert.Equal(0m, result.Modules.Reputation.WeightedContribution);
-        Assert.Contains(result.Alerts, alert => alert.Message.Contains("reputation analysis could not be completed reliably", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("temporarily unavailable", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

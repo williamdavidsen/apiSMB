@@ -30,9 +30,16 @@ namespace SecurityAssessmentAPI.Services
                 return CreateErrorResult(normalizedDomain, "VirusTotal data could not be retrieved. Check API key, quota, or domain availability.");
             }
 
+            if (string.Equals(report.ProviderStatus, "RATE_LIMITED", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(report.ProviderStatus, "UNAVAILABLE", StringComparison.OrdinalIgnoreCase))
+            {
+                return CreateUnavailableResult(normalizedDomain, report.ProviderMessage);
+            }
+
             var result = new ReputationCheckResult
             {
                 Domain = normalizedDomain,
+                ProviderStatus = report.ProviderStatus,
                 Summary = new ReputationSummary
                 {
                     MaliciousDetections = report.MaliciousDetections,
@@ -193,12 +200,33 @@ namespace SecurityAssessmentAPI.Services
             {
                 Domain = domain,
                 Status = "ERROR",
+                ProviderStatus = "ERROR",
                 Alerts = new List<ReputationAlert>
                 {
                     new ReputationAlert
                     {
                         Type = "CRITICAL_WARNING",
                         Message = message
+                    }
+                }
+            };
+        }
+
+        private static ReputationCheckResult CreateUnavailableResult(string domain, string message)
+        {
+            return new ReputationCheckResult
+            {
+                Domain = domain,
+                Status = "UNAVAILABLE",
+                ProviderStatus = "UNAVAILABLE",
+                Alerts = new List<ReputationAlert>
+                {
+                    new ReputationAlert
+                    {
+                        Type = "INFO",
+                        Message = string.IsNullOrWhiteSpace(message)
+                            ? "VirusTotal reputation data is temporarily unavailable."
+                            : message
                     }
                 }
             };

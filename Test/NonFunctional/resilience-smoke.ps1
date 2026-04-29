@@ -23,13 +23,13 @@ $domainTargets = @(
   $realDomains | ForEach-Object {
     [pscustomobject]@{
       Domain = $_
-      ExpectedSuccess = $true
+      ExpectedOutcome = 'LIVE_SUCCESS'
     }
   }
   $fakeDomains | ForEach-Object {
     [pscustomobject]@{
       Domain = $_
-      ExpectedSuccess = $false
+      ExpectedOutcome = 'HANDLED_NEGATIVE'
     }
   }
 )
@@ -45,34 +45,61 @@ $results = foreach ($target in $domainTargets) {
     $content = [System.Net.Http.StringContent]::new($payload, [System.Text.Encoding]::UTF8, 'application/json')
     $response = $client.PostAsync('api/assessment/check', $content).GetAwaiter().GetResult()
     $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+    $parsedBody = $null
+    try {
+      $parsedBody = $body | ConvertFrom-Json
+    }
+    catch {
+      $parsedBody = $null
+    }
+
     [pscustomobject]@{
       Domain = $target.Domain
-      ExpectedSuccess = $target.ExpectedSuccess
+      ExpectedOutcome = $target.ExpectedOutcome
       StatusCode = [int]$response.StatusCode
       Success = $response.IsSuccessStatusCode
+      AssessmentStatus = if ($parsedBody) { "$($parsedBody.status)" } else { '' }
+      OverallScore = if ($parsedBody -and $null -ne $parsedBody.overallScore) { [int]$parsedBody.overallScore } else { -1 }
       Body = $body
     }
   }
   catch {
     [pscustomobject]@{
       Domain = $target.Domain
-      ExpectedSuccess = $target.ExpectedSuccess
+      ExpectedOutcome = $target.ExpectedOutcome
       StatusCode = 0
       Success = $false
+      AssessmentStatus = ''
+      OverallScore = -1
       Body = $_.Exception.Message
     }
   }
 }
 
-$results | Select-Object Domain, ExpectedSuccess, StatusCode, Success | Format-Table -AutoSize
+$results | Select-Object Domain, ExpectedOutcome, StatusCode, Success, AssessmentStatus, OverallScore | Format-Table -AutoSize
 
 $transportFailures = $results | Where-Object { $_.StatusCode -eq 0 }
 if ($transportFailures.Count -gt 0) {
   throw "Resilience smoke failed because one or more requests did not return a handled HTTP response."
 }
 
-$realFailures = $results | Where-Object { $_.ExpectedSuccess -and -not $_.Success }
+$realFailures = $results | Where-Object { $_.ExpectedOutcome -eq 'LIVE_SUCCESS' -and -not $_.Success }
 if ($realFailures.Count -gt 0) {
   $summary = ($realFailures | ForEach-Object { "$($_.Domain) => HTTP_$($_.StatusCode)" }) -join '; '
   throw "Resilience smoke failed because expected-live domains did not succeed: $summary"
+}
+
+$negativeFailures = $results | Where-Object {
+  $_.ExpectedOutcome -eq 'HANDLED_NEGATIVE' -and (
+    -not $_.Success -or
+    $_.AssessmentStatus -notin @('PARTIAL', 'FAIL', 'ERROR') -or
+    $_.OverallScore -ne 0
+  )
+}
+
+if ($negativeFailures.Count -gt 0) {
+  $summary = ($negativeFailures | ForEach-Object {
+    "$($_.Domain) => HTTP_$($_.StatusCode), Status=$($_.AssessmentStatus), Score=$($_.OverallScore)"
+  }) -join '; '
+  throw "Resilience smoke failed because reserved negative domains did not produce the expected degraded handled result: $summary"
 }

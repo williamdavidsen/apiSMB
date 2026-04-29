@@ -61,7 +61,9 @@ namespace SecurityAssessmentAPI.Services
             var pqcResult = await pqcTask;
 
             var emailIncluded = emailResult.ModuleApplicable && emailResult.HasMailService;
-            var reputationIncluded = !string.Equals(reputationResult.Status, "ERROR", StringComparison.OrdinalIgnoreCase);
+            var reputationIncluded =
+                !string.Equals(reputationResult.Status, "ERROR", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(reputationResult.Status, "UNAVAILABLE", StringComparison.OrdinalIgnoreCase);
 
             var result = new AssessmentCheckResult
             {
@@ -305,6 +307,14 @@ namespace SecurityAssessmentAPI.Services
                 {
                     Type = "WARNING",
                     Message = "Domain/IP reputation analysis could not be completed reliably."
+                });
+            }
+            else if (string.Equals(reputationResult.Status, "UNAVAILABLE", StringComparison.OrdinalIgnoreCase))
+            {
+                result.Alerts.Add(new AssessmentAlert
+                {
+                    Type = "INFO",
+                    Message = "Domain/IP reputation analysis is temporarily unavailable, so the module was excluded from the final weighted score."
                 });
             }
             else if (string.Equals(reputationResult.Status, "FAIL", StringComparison.OrdinalIgnoreCase))

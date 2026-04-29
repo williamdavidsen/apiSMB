@@ -1,5 +1,6 @@
 using System.Net;
 using API.UnitTests.TestSupport;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecurityAssessmentAPI.Services;
@@ -13,11 +14,12 @@ public sealed class VirusTotalClientTests
     public async Task GetDomainReportAsync_WhenApiKeyIsMissing_ReturnsNull()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        var client = new VirusTotalClient(new HttpClient(new StubHttpMessageHandler((_, _) => throw new InvalidOperationException())), configuration, NullLogger<VirusTotalClient>.Instance);
+        var client = CreateClient(new HttpClient(new StubHttpMessageHandler((_, _) => throw new InvalidOperationException())), configuration);
 
         var result = await client.GetDomainReportAsync("example.com");
 
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.Equal("UNAVAILABLE", result.ProviderStatus);
     }
 
     [Fact]
@@ -30,7 +32,7 @@ public sealed class VirusTotalClientTests
             return Task.FromResult(HttpResponseFactory.Json(HttpStatusCode.NotFound, "{}", request.RequestUri));
         });
 
-        var client = new VirusTotalClient(new HttpClient(handler), configuration, NullLogger<VirusTotalClient>.Instance);
+        var client = CreateClient(new HttpClient(handler), configuration);
 
         var result = await client.GetDomainReportAsync("example.com");
 
@@ -66,7 +68,7 @@ public sealed class VirusTotalClientTests
             }
             """, request.RequestUri)));
 
-        var client = new VirusTotalClient(new HttpClient(handler), configuration, NullLogger<VirusTotalClient>.Instance);
+        var client = CreateClient(new HttpClient(handler), configuration);
 
         var result = await client.GetDomainReportAsync("example.com");
 
@@ -78,31 +80,32 @@ public sealed class VirusTotalClientTests
     }
 
     [Fact]
-    public async Task GetDomainReportAsync_WhenProviderReturnsNonSuccess_ReturnsNull()
+    public async Task GetDomainReportAsync_WhenProviderReturnsNonSuccess_ReturnsUnavailableReport()
     {
         var configuration = CreateConfiguration();
         var handler = new StubHttpMessageHandler((request, _) =>
             Task.FromResult(HttpResponseFactory.Json(HttpStatusCode.BadGateway, "{\"error\":\"upstream\"}", request.RequestUri)));
 
-        var client = new VirusTotalClient(new HttpClient(handler), configuration, NullLogger<VirusTotalClient>.Instance);
+        var client = CreateClient(new HttpClient(handler), configuration);
 
         var result = await client.GetDomainReportAsync("example.com");
 
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.Equal("UNAVAILABLE", result.ProviderStatus);
     }
 
     [Fact]
-    public async Task GetDomainReportAsync_WhenProviderThrows_ReturnsNull()
+    public async Task GetDomainReportAsync_WhenProviderThrows_ReturnsUnavailableReport()
     {
         var configuration = CreateConfiguration();
-        var client = new VirusTotalClient(
+        var client = CreateClient(
             new HttpClient(new StubHttpMessageHandler((_, _) => throw new HttpRequestException("offline"))),
-            configuration,
-            NullLogger<VirusTotalClient>.Instance);
+            configuration);
 
         var result = await client.GetDomainReportAsync("example.com");
 
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.Equal("UNAVAILABLE", result.ProviderStatus);
     }
 
     [Fact]
@@ -118,7 +121,7 @@ public sealed class VirusTotalClientTests
                 return Task.FromResult(HttpResponseFactory.Json(HttpStatusCode.NotFound, "{}", request.RequestUri));
             });
 
-            var client = new VirusTotalClient(new HttpClient(handler), configuration, NullLogger<VirusTotalClient>.Instance);
+            var client = CreateClient(new HttpClient(handler), configuration);
 
             var result = await client.GetDomainReportAsync("example.com");
 
@@ -157,7 +160,7 @@ public sealed class VirusTotalClientTests
             }
             """, request.RequestUri)));
 
-        var client = new VirusTotalClient(new HttpClient(handler), configuration, NullLogger<VirusTotalClient>.Instance);
+        var client = CreateClient(new HttpClient(handler), configuration);
 
         var result = await client.GetDomainReportAsync("example.com");
 
@@ -169,6 +172,21 @@ public sealed class VirusTotalClientTests
         Assert.NotNull(result.LastAnalysisDate);
     }
 
+    [Fact]
+    public async Task GetDomainReportAsync_WhenProviderRateLimits_ReturnsRateLimitedReport()
+    {
+        var configuration = CreateConfiguration();
+        var handler = new StubHttpMessageHandler((request, _) =>
+            Task.FromResult(HttpResponseFactory.Json(HttpStatusCode.TooManyRequests, "{\"error\":\"quota\"}", request.RequestUri)));
+
+        var client = CreateClient(new HttpClient(handler), configuration);
+
+        var result = await client.GetDomainReportAsync("example.com");
+
+        Assert.NotNull(result);
+        Assert.Equal("RATE_LIMITED", result.ProviderStatus);
+    }
+
     private static IConfiguration CreateConfiguration()
     {
         return new ConfigurationBuilder()
@@ -177,5 +195,14 @@ public sealed class VirusTotalClientTests
                 ["VirusTotal:ApiKey"] = "test-key"
             })
             .Build();
+    }
+
+    private static VirusTotalClient CreateClient(HttpClient httpClient, IConfiguration configuration)
+    {
+        return new VirusTotalClient(
+            httpClient,
+            configuration,
+            new MemoryCache(new MemoryCacheOptions()),
+            NullLogger<VirusTotalClient>.Instance);
     }
 }

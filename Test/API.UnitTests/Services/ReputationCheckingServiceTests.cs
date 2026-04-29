@@ -82,15 +82,19 @@ public sealed class ReputationCheckingServiceTests
     }
 
     [Fact]
-    public async Task CheckReputationAsync_WhenProviderDataIsUnavailable_ReturnsError()
+    public async Task CheckReputationAsync_WhenProviderDataIsUnavailable_ReturnsUnavailable()
     {
         var service = new ReputationCheckingService(
-            new FakeVirusTotalClient(null),
+            new FakeVirusTotalClient(new VirusTotalDomainReport
+            {
+                ProviderStatus = "UNAVAILABLE",
+                ProviderMessage = "VirusTotal quota or rate limit was reached."
+            }),
             NullLogger<ReputationCheckingService>.Instance);
 
         var result = await service.CheckReputationAsync("example.com");
 
-        Assert.Equal("ERROR", result.Status);
-        Assert.Contains(result.Alerts, alert => alert.Message.Contains("could not be retrieved", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("UNAVAILABLE", result.Status);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("quota", StringComparison.OrdinalIgnoreCase));
     }
 }

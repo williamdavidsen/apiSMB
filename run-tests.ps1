@@ -1,9 +1,10 @@
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Resolve-Path $PSScriptRoot
-$apiBaseUrl = 'http://localhost:1071'
+$apiBaseUrl = 'http://localhost:1072'
 $ownedApiProcess = $null
 $powershellExe = (Get-Command powershell -ErrorAction Stop).Source
+$liveE2EDomainFile = Join-Path $repoRoot 'Test\AssessmentBatchRunner\live-smoke-domains.txt'
 
 function Invoke-Step {
     param(
@@ -69,8 +70,14 @@ function Ensure-LocalApi {
         [string] $Url
     )
 
-    if (Test-ApiAvailable -Url $Url) {
-        return $null
+    $apiBinaryRoot = (Join-Path $repoRoot 'API\bin').ToLowerInvariant()
+    $existingProcesses = Get-Process -Name 'SecurityAssessmentAPI' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -and $_.Path.ToLowerInvariant().StartsWith($apiBinaryRoot) }
+
+    foreach ($existingProcess in $existingProcesses) {
+        if (-not $existingProcess.HasExited) {
+            Stop-Process -Id $existingProcess.Id -Force
+        }
     }
 
     $apiProject = Join-Path $repoRoot 'API\SecurityAssessmentAPI.csproj'
@@ -82,7 +89,7 @@ function Ensure-LocalApi {
     $stderrLog = Join-Path $logDirectory 'stderr.log'
 
     $process = Start-Process dotnet `
-        -ArgumentList @('run', '--project', $apiProject, '--launch-profile', 'http', '--no-build') `
+        -ArgumentList @('run', '--project', $apiProject, '--launch-profile', 'http', '--', '--urls', $Url) `
         -WorkingDirectory $apiWorkingDirectory `
         -RedirectStandardOutput $stdoutLog `
         -RedirectStandardError $stderrLog `
@@ -99,6 +106,24 @@ function Ensure-LocalApi {
         }
         throw
     }
+}
+
+function Get-LiveE2EDomain {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Path
+    )
+
+    $domain = Get-Content $Path |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { $_ -and -not $_.StartsWith('#') } |
+        Select-Object -First 1
+
+    if ([string]::IsNullOrWhiteSpace($domain)) {
+        throw "Could not determine LIVE_E2E_DOMAIN from $Path"
+    }
+
+    return $domain
 }
 
 function Stop-OwnedApi {
@@ -145,13 +170,23 @@ try {
     }
 
     Invoke-Step -Name "E2E tests" -Action {
+        if ($null -eq $ownedApiProcess) {
+            $ownedApiProcess = Ensure-LocalApi -Url $apiBaseUrl
+        }
+
         Push-Location (Join-Path $repoRoot 'Test\E2E')
         try {
+            $previousLiveDomain = $env:LIVE_E2E_DOMAIN
+            $previousDevApiProxy = $env:VITE_DEV_API_PROXY
+            $env:LIVE_E2E_DOMAIN = Get-LiveE2EDomain -Path $liveE2EDomainFile
+            $env:VITE_DEV_API_PROXY = $apiBaseUrl
             Invoke-CheckedCommand {
                 npm test
             }
         }
         finally {
+            $env:LIVE_E2E_DOMAIN = $previousLiveDomain
+            $env:VITE_DEV_API_PROXY = $previousDevApiProxy
             Pop-Location
         }
     }
