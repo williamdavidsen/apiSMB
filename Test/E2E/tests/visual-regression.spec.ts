@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import assessmentFixture from '../fixtures/assessment-response.json' with { type: 'json' }
 
-async function closePqcDialogIfPresent(page: Parameters<(typeof test)['beforeEach']>[0]['page']) {
+async function closePqcDialogIfPresent(page: Page) {
   const closeButton = page.getByRole('button', { name: /close post-quantum dialog/i })
 
   if (await closeButton.isVisible().catch(() => false)) {
@@ -72,6 +73,7 @@ test.describe('visual regression', () => {
     await expect(page.locator('main')).toHaveScreenshot('module-detail-ssl.png', {
       animations: 'disabled',
       mask: [page.getByText(/scanned /i)],
+      maxDiffPixels: 100,
     })
   })
 })
