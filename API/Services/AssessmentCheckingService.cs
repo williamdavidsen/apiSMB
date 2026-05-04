@@ -311,10 +311,19 @@ namespace SecurityAssessmentAPI.Services
             }
             else if (string.Equals(reputationResult.Status, "UNAVAILABLE", StringComparison.OrdinalIgnoreCase))
             {
+                var message =
+                    string.Equals(reputationResult.ProviderStatus, "NOT_FOUND", StringComparison.OrdinalIgnoreCase)
+                        ? "VirusTotal has no reputation report for this domain, so the reputation module was excluded from the final weighted score. Absence of a VirusTotal report is not evidence that the domain is clean."
+                        : string.Equals(reputationResult.ProviderStatus, "NO_EVIDENCE", StringComparison.OrdinalIgnoreCase)
+                            ? "VirusTotal returned no reputation evidence for this domain, so the reputation module was excluded from the final weighted score. Absence of evidence is not evidence that the domain is clean."
+                            : string.Equals(reputationResult.ProviderStatus, "DNS_NOT_FOUND", StringComparison.OrdinalIgnoreCase)
+                                ? "DNS did not return A or AAAA records for this domain, so the reputation module was excluded from the final weighted score. A non-resolving domain is not proven safe by absent VirusTotal detections."
+                                : "Domain/IP reputation analysis is unavailable, so the module was excluded from the final weighted score.";
+
                 result.Alerts.Add(new AssessmentAlert
                 {
                     Type = "INFO",
-                    Message = "Domain/IP reputation analysis is temporarily unavailable, so the module was excluded from the final weighted score."
+                    Message = message
                 });
             }
             else if (string.Equals(reputationResult.Status, "FAIL", StringComparison.OrdinalIgnoreCase))

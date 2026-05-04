@@ -38,6 +38,7 @@ public sealed class VirusTotalClientTests
 
         Assert.NotNull(result);
         Assert.Equal("example.com", result.Domain);
+        Assert.Equal("NOT_FOUND", result.ProviderStatus);
         Assert.Contains("/gui/domain/example.com", result.Permalink, StringComparison.OrdinalIgnoreCase);
     }
 

@@ -24,6 +24,7 @@ public sealed class ReputationCheckingServiceTests
 
         var service = new ReputationCheckingService(
             new FakeVirusTotalClient(report),
+            new FakeDnsAddressClient(),
             NullLogger<ReputationCheckingService>.Instance);
 
         var result = await service.CheckReputationAsync("https://example.com/path");
@@ -48,6 +49,7 @@ public sealed class ReputationCheckingServiceTests
 
         var service = new ReputationCheckingService(
             new FakeVirusTotalClient(report),
+            new FakeDnsAddressClient(),
             NullLogger<ReputationCheckingService>.Instance);
 
         var result = await service.CheckReputationAsync("admin@example.com");
@@ -56,6 +58,30 @@ public sealed class ReputationCheckingServiceTests
         Assert.Equal("WARNING", result.Status);
         Assert.Equal(12, result.OverallScore);
         Assert.Contains(result.Alerts, alert => alert.Message.Contains("suspicious", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CheckReputationAsync_WithPositiveReputationAndNoDetections_DoesNotFailOnCommunityVotesAlone()
+    {
+        var report = new VirusTotalDomainReport
+        {
+            Reputation = 119,
+            MaliciousDetections = 0,
+            SuspiciousDetections = 0,
+            CommunityMaliciousVotes = 7,
+            CommunityHarmlessVotes = 66
+        };
+
+        var service = new ReputationCheckingService(
+            new FakeVirusTotalClient(report),
+            new FakeDnsAddressClient(),
+            NullLogger<ReputationCheckingService>.Instance);
+
+        var result = await service.CheckReputationAsync("github.com");
+
+        Assert.Equal("PASS", result.Status);
+        Assert.Equal(18, result.OverallScore);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("community users", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -71,6 +97,7 @@ public sealed class ReputationCheckingServiceTests
 
         var service = new ReputationCheckingService(
             new FakeVirusTotalClient(report),
+            new FakeDnsAddressClient(),
             NullLogger<ReputationCheckingService>.Instance);
 
         var result = await service.CheckReputationAsync("example.com");
@@ -90,11 +117,74 @@ public sealed class ReputationCheckingServiceTests
                 ProviderStatus = "UNAVAILABLE",
                 ProviderMessage = "VirusTotal quota or rate limit was reached."
             }),
+            new FakeDnsAddressClient(),
             NullLogger<ReputationCheckingService>.Instance);
 
         var result = await service.CheckReputationAsync("example.com");
 
         Assert.Equal("UNAVAILABLE", result.Status);
+        Assert.Equal("UNAVAILABLE", result.ProviderStatus);
         Assert.Contains(result.Alerts, alert => alert.Message.Contains("quota", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CheckReputationAsync_WhenVirusTotalHasNoReport_DoesNotReturnCleanPass()
+    {
+        var service = new ReputationCheckingService(
+            new FakeVirusTotalClient(new VirusTotalDomainReport
+            {
+                Domain = "unknown-domain.invalid",
+                ProviderStatus = "NOT_FOUND"
+            }),
+            new FakeDnsAddressClient(),
+            NullLogger<ReputationCheckingService>.Instance);
+
+        var result = await service.CheckReputationAsync("unknown-domain.invalid");
+
+        Assert.Equal("UNAVAILABLE", result.Status);
+        Assert.Equal("NOT_FOUND", result.ProviderStatus);
+        Assert.Equal(0, result.OverallScore);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("not evidence", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CheckReputationAsync_WhenVirusTotalReportHasNoEvidence_DoesNotReturnCleanPass()
+    {
+        var service = new ReputationCheckingService(
+            new FakeVirusTotalClient(new VirusTotalDomainReport
+            {
+                Domain = "empty-report.example",
+                ProviderStatus = "READY"
+            }),
+            new FakeDnsAddressClient(),
+            NullLogger<ReputationCheckingService>.Instance);
+
+        var result = await service.CheckReputationAsync("empty-report.example");
+
+        Assert.Equal("UNAVAILABLE", result.Status);
+        Assert.Equal("NO_EVIDENCE", result.ProviderStatus);
+        Assert.Equal(0, result.OverallScore);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("no analysis evidence", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CheckReputationAsync_WhenDomainDoesNotResolve_DoesNotReturnCleanPass()
+    {
+        var service = new ReputationCheckingService(
+            new FakeVirusTotalClient(new VirusTotalDomainReport
+            {
+                Reputation = 12,
+                MaliciousDetections = 0,
+                SuspiciousDetections = 0
+            }),
+            new FakeDnsAddressClient(hasAddressRecords: false),
+            NullLogger<ReputationCheckingService>.Instance);
+
+        var result = await service.CheckReputationAsync("does-not-resolve.example");
+
+        Assert.Equal("UNAVAILABLE", result.Status);
+        Assert.Equal("DNS_NOT_FOUND", result.ProviderStatus);
+        Assert.Equal(0, result.OverallScore);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("DNS did not return", StringComparison.OrdinalIgnoreCase));
     }
 }

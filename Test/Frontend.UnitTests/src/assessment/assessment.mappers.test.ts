@@ -33,7 +33,7 @@ describe('assessment dashboard mappers', () => {
   })
 
   it('maps reputation verdicts with malicious detections taking priority', () => {
-    expect(reputationVerdict('PASS', 0, 0)).toBe('Clean')
+    expect(reputationVerdict('PASS', 0, 0)).toBe('No VT detections')
     expect(reputationVerdict('WARNING', 2, 0)).toBe('Mixed signals')
     expect(reputationVerdict('PASS', 0, 1)).toBe('Malicious signals')
     expect(reputationVerdict('ERROR', 0, 0)).toBe('Unknown')

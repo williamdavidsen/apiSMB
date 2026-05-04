@@ -46,7 +46,7 @@ public sealed class AssessmentCheckingServiceTests
         Assert.Equal(0m, result.Weights.Reputation);
         Assert.False(result.Modules.Reputation.Included);
         Assert.Equal(0m, result.Modules.Reputation.WeightedContribution);
-        Assert.Contains(result.Alerts, alert => alert.Message.Contains("temporarily unavailable", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("unavailable", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -177,6 +177,43 @@ public sealed class AssessmentCheckingServiceTests
         Assert.Equal("FAIL", result.Status);
         Assert.Equal("F", result.Grade);
         Assert.True(result.Modules.Reputation.Included);
+    }
+
+    [Fact]
+    public async Task CheckAssessmentAsync_WhenVirusTotalHasNoReport_ExcludesReputationFromFinalScore()
+    {
+        var service = CreateService(
+            ssl: new SslCheckResult { OverallScore = 0, MaxScore = 30, Status = "FAIL" },
+            headers: new HeadersCheckResult { OverallScore = 0, MaxScore = 10, Status = "FAIL" },
+            email: new EmailCheckResult { ModuleApplicable = true, HasMailService = false, OverallScore = 0, MaxScore = 20, Status = "INFO" },
+            reputation: new ReputationCheckResult { OverallScore = 0, MaxScore = 20, Status = "UNAVAILABLE", ProviderStatus = "NOT_FOUND" });
+
+        var result = await service.CheckAssessmentAsync("fake-domain.invalid");
+
+        Assert.False(result.EmailModuleIncluded);
+        Assert.False(result.Modules.Reputation.Included);
+        Assert.Equal(0m, result.Weights.Reputation);
+        Assert.Equal(0m, result.Modules.Reputation.WeightedContribution);
+        Assert.Equal(0, result.OverallScore);
+        Assert.Equal("F", result.Grade);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("not evidence", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CheckAssessmentAsync_WhenVirusTotalHasNoEvidence_ExcludesReputationFromFinalScore()
+    {
+        var service = CreateService(
+            ssl: new SslCheckResult { OverallScore = 30, MaxScore = 30, Status = "PASS" },
+            headers: new HeadersCheckResult { OverallScore = 10, MaxScore = 10, Status = "PASS" },
+            email: new EmailCheckResult { ModuleApplicable = true, HasMailService = true, OverallScore = 20, MaxScore = 20, Status = "PASS" },
+            reputation: new ReputationCheckResult { OverallScore = 0, MaxScore = 20, Status = "UNAVAILABLE", ProviderStatus = "NO_EVIDENCE" });
+
+        var result = await service.CheckAssessmentAsync("empty-report.example");
+
+        Assert.False(result.Modules.Reputation.Included);
+        Assert.Equal(0m, result.Weights.Reputation);
+        Assert.Equal(100, result.OverallScore);
+        Assert.Contains(result.Alerts, alert => alert.Message.Contains("no reputation evidence", StringComparison.OrdinalIgnoreCase));
     }
 
     private static AssessmentCheckingService CreateService(

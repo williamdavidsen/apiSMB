@@ -121,7 +121,7 @@ export function reputationVerdict(status: string, _suspicious: number, malicious
   if (malicious > 0) return 'Malicious signals'
   if (key === 'FAIL') return 'Suspicious'
   if (key === 'WARNING') return 'Mixed signals'
-  if (key === 'PASS') return 'Clean'
+  if (key === 'PASS') return 'No VT detections'
   return status || 'Unknown'
 }
 
@@ -197,7 +197,7 @@ function toneEmailRow(value: string): ModuleFactTone {
 
 function toneReputationVerdict(value: string): ModuleFactTone {
   if (value === 'Unknown') return 'warning'
-  if (value === 'Clean') return 'success'
+  if (value === 'No VT detections') return 'success'
   if (value === 'Suspicious' || value.includes('Malicious')) return 'error'
   if (value === 'Mixed signals') return 'warning'
   return 'neutral'

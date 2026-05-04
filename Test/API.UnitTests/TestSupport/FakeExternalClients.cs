@@ -59,3 +59,30 @@ internal sealed class FakeVirusTotalClient : IVirusTotalClient
         return Task.FromResult(_report);
     }
 }
+
+internal sealed class FakeDnsAddressClient : IDnsAnalysisClient
+{
+    private readonly bool _succeeds;
+    private readonly bool _hasAddressRecords;
+
+    public FakeDnsAddressClient(bool hasAddressRecords = true, bool succeeds = true)
+    {
+        _hasAddressRecords = hasAddressRecords;
+        _succeeds = succeeds;
+    }
+
+    public Task<DnsLookupResult> QueryAsync(string name, string type, CancellationToken cancellationToken = default)
+    {
+        var result = new DnsLookupResult
+        {
+            Succeeded = _succeeds
+        };
+
+        if (_succeeds && _hasAddressRecords && string.Equals(type, "A", StringComparison.OrdinalIgnoreCase))
+        {
+            result.Records.Add("203.0.113.10");
+        }
+
+        return Task.FromResult(result);
+    }
+}
