@@ -1,8 +1,14 @@
 import { expect, test } from '@playwright/test'
 import assessmentFixture from '../fixtures/assessment-response.json' with { type: 'json' }
 
+type AlertFixture = { type: string; message: string }
+type MutableAssessmentFixture = Omit<typeof assessmentFixture, 'assessment' | 'email'> & {
+  assessment: Omit<typeof assessmentFixture.assessment, 'alerts'> & { alerts: AlertFixture[] }
+  email: Omit<typeof assessmentFixture.email, 'alerts'> & { alerts: AlertFixture[] }
+}
+
 test('dashboard renders partial assessment messaging and e-mail error state', async ({ page }) => {
-  const partialFixture = structuredClone(assessmentFixture)
+  const partialFixture = structuredClone(assessmentFixture) as MutableAssessmentFixture
   partialFixture.assessment.status = 'PARTIAL'
   partialFixture.assessment.grade = 'C'
   partialFixture.assessment.overallScore = 71
