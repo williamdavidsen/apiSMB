@@ -1,76 +1,76 @@
-# Security Assessment Platform for SMB Customers
+# Sikkerhetsvurderingsplattform for SMB-kunder
 
-Bachelor project repository for an API-based security assessment platform for small and medium-sized businesses. The project combines an ASP.NET Core backend with a React dashboard to evaluate a domain across several security-related modules and present the result in a structured, user-facing interface.
+Dette repositoryet inneholder et bachelorprosjekt for en API-basert sikkerhetsvurderingsplattform rettet mot små og mellomstore bedrifter. Prosjektet kombinerer en ASP.NET Core-backend med et React-dashboard som vurderer et domene gjennom flere sikkerhetsmoduler og presenterer resultatet i et strukturert grensesnitt for sluttbruker.
 
-## Project Summary
+## Prosjektsammendrag
 
-The purpose of this project is to explore how automated security checks can be collected, interpreted, and presented in a way that is understandable for SMB customers. A user enters a domain name in the dashboard, and the system runs a combined assessment based on SSL/TLS, HTTP security headers, email security, reputation data, and post-quantum cryptography readiness indicators.
+Formålet med prosjektet er å undersøke hvordan automatiserte sikkerhetssjekker kan samles inn, tolkes og presenteres på en måte som er forståelig for SMB-kunder. Brukeren skriver inn et domenenavn i dashboardet, og systemet kjører en samlet vurdering basert på SSL/TLS, HTTP security headers, e-postsikkerhet, omdømmedata og indikatorer for post-quantum cryptography readiness.
 
-The application is intended as a practical bachelor project prototype. It is not a replacement for a professional penetration test, security audit, or compliance assessment.
+Applikasjonen er en praktisk bachelorprosjekt-prototype. Den er ikke en erstatning for en profesjonell penetration test, security audit eller compliance assessment.
 
-## Scope
+## Omfang
 
-The current implementation includes:
+Den nåværende implementasjonen inkluderer:
 
-- SSL/TLS analysis based on SSL Labs data
-- HTTP security header analysis based on direct header inspection and Mozilla Observatory data when available
-- Email security analysis based on DNS records such as SPF, DKIM, and DMARC
-- Reputation analysis based on DNS resolution and VirusTotal data when an API key is configured
-- PQC readiness analysis based on TLS protocol, cipher suite, and named group information
-- A combined assessment endpoint that aggregates module results into a score, grade, status, alerts, and dashboard-oriented response model
-- A React dashboard for starting a scan and viewing module-level results
+- SSL/TLS-analyse basert på data fra SSL Labs, med direkte TLS-probe som fallback
+- HTTP security header-analyse basert på direkte header-inspeksjon og Mozilla Observatory-data når det er tilgjengelig
+- E-postsikkerhetsanalyse basert på DNS-poster som SPF, DKIM og DMARC
+- Omdømmeanalyse basert på DNS-oppslag og VirusTotal-data når en API-nøkkel er konfigurert
+- PQC readiness-analyse basert på TLS-protokoll, cipher suites og named groups
+- Et samlet assessment-endepunkt som kombinerer modulresultater til score, karakter, status, varsler og en responsmodell tilpasset dashboardet
+- Et React-dashboard for å starte en skanning og vise resultater på modulnivå
 
-## Technology Stack
+## Teknologistack
 
 - Backend: ASP.NET Core, C#, .NET 10
-- API documentation: Swagger / OpenAPI
-- Data storage: Entity Framework Core in-memory database
+- API-dokumentasjon: Swagger / OpenAPI
+- Datalagring: Entity Framework Core med in-memory database
 - Frontend: React, TypeScript, Vite, Material UI
-- Tests: xUnit, ASP.NET Core TestHost, Vitest, Playwright
+- Testing: xUnit, ASP.NET Core TestHost, Vitest, Playwright
 
-## Repository Structure
+## Repostruktur
 
 ```text
 API/
-  Controllers/Api/        REST API controllers
-  DAL/                    In-memory data context and repositories
-  DTOs/                   Request and response models
-  Services/               Assessment logic and external service clients
+  Controllers/Api/        REST API-kontrollere
+  DAL/                    In-memory datakontekst og repositories
+  DTOs/                   Request- og responsmodeller
+  Services/               Assessment-logikk og eksterne serviceklienter
+  global.json             .NET SDK-valg for API-prosjektet
 
 Frontend/
-  package.json            Convenience scripts for the dashboard app
-  dashboard/              React, TypeScript, Vite dashboard
+  package.json            Scripts for dashboard-applikasjonen
+  dashboard/              React, TypeScript og Vite-dashboard
 
 Test/
-  API.UnitTests/          Backend unit tests
-  API.IntegrationTests/   API smoke/integration tests
-  Frontend.UnitTests/     Frontend mapping and validation tests
+  API.UnitTests/          Enhetstester for backend
+  API.IntegrationTests/   Smoke- og integrasjonstester for API
+  Frontend.UnitTests/     Mapping- og valideringstester for frontend
   E2E/                    Playwright smoke test
-  ManualTests/            Manual delivery checklist
-  Reports/                Short test report
+  Reports/                Kort testrapport
 
-run-tests.ps1             Combined reduced test suite
-global.json               .NET SDK selection
+run-tests.ps1             Kombinert redusert testpakke
+package.json              Workspace-script for test:all
 ```
 
-## Requirements
+## Krav
 
-- .NET SDK 10.0.x. The repository contains `global.json` with SDK version `10.0.201` and `rollForward` set to `latestFeature`.
-- Node.js compatible with the frontend tooling. Node.js 22 LTS is recommended. The Vite version used by the project requires Node.js `^20.19.0` or newer compatible releases.
+- .NET SDK 10.0.x. API-prosjektet inneholder `API/global.json` med SDK-versjon `10.0.201` og `rollForward` satt til `latestFeature`.
+- Node.js som er kompatibel med frontend-verktøyene. Node.js 22 LTS anbefales. Vite-versjonen som brukes i prosjektet krever Node.js `^20.19.0` eller nyere kompatible versjoner.
 - npm.
-- Internet access for live external checks, package restore, and frontend package installation.
+- Internettilgang for live eksterne sjekker, package restore og installasjon av frontend-avhengigheter.
 
-## Configuration
+## Konfigurasjon
 
-The backend can run without a local configuration file. Reputation checks are more complete when a VirusTotal API key is configured.
+Backenden kan kjøre uten en lokal konfigurasjonsfil. Omdømmesjekker blir mer fullstendige når en VirusTotal API-nøkkel er konfigurert.
 
-Recommended local-only configuration file:
+Anbefalt lokal konfigurasjonsfil, dersom VirusTotal skal brukes:
 
 ```text
 API/appsettings.Local.json
 ```
 
-Example:
+Eksempel:
 
 ```json
 {
@@ -80,58 +80,58 @@ Example:
 }
 ```
 
-The same value can also be supplied through an environment variable:
+Den samme verdien kan også gis gjennom en miljøvariabel:
 
 ```powershell
 $env:VirusTotal__ApiKey = "your-api-key"
 ```
 
-Do not commit real API keys or local secrets.
+Ikke commit ekte API-nøkler eller lokale secrets.
 
-## Running the Application
+## Kjøre applikasjonen
 
-Install the frontend dependencies once:
+Installer frontend-avhengigheter én gang:
 
 ```powershell
 cd .\Frontend
 npm run setup
 ```
 
-Start the frontend development environment:
+Start utviklingsmiljøet for frontend:
 
 ```powershell
 npm run dev
 ```
 
-This forwards to `Frontend/dashboard`. The dashboard development script starts the API on `http://localhost:1072` if it is not already running, then starts the Vite frontend on:
+Dette videresender kommandoen til `Frontend/dashboard`. Dashboardets utviklingsscript starter API-et på `http://localhost:1072` dersom det ikke allerede kjører, og starter deretter Vite frontend på:
 
 ```text
 http://localhost:5187
 ```
 
-The frontend proxies `/api` requests to:
+Frontend proxier `/api`-requests til:
 
 ```text
 http://localhost:1072
 ```
 
-If the API should run on another URL, set `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development`.
+Hvis API-et skal kjøre på en annen URL, kan `VITE_DEV_API_PROXY` settes i `Frontend/dashboard/.env.development`.
 
-## Running the API Separately
+## Kjøre API separat
 
-From the repository root:
+Fra repository root:
 
 ```powershell
 dotnet run --project .\API\SecurityAssessmentAPI.csproj --launch-profile http
 ```
 
-Or from the `API` folder:
+Eller fra `API`-mappen:
 
 ```powershell
 dotnet run --project .\SecurityAssessmentAPI.csproj --launch-profile http
 ```
 
-Default API URLs:
+Standard API-URL-er:
 
 ```text
 API:          http://localhost:1072
@@ -139,7 +139,7 @@ Swagger UI:   http://localhost:1072/swagger
 OpenAPI JSON: http://localhost:1072/swagger/v1/swagger.json
 ```
 
-## Main API Endpoints
+## Viktigste API-endepunkter
 
 ```text
 GET /api/assessment/check/{domain}
@@ -154,7 +154,7 @@ GET /
 
 ## Testing
 
-Install test dependencies before running frontend and E2E tests:
+Installer testavhengigheter før frontend- og E2E-tester kjøres:
 
 ```powershell
 cd .\Test\Frontend.UnitTests
@@ -165,50 +165,52 @@ npm ci
 npx playwright install chromium
 ```
 
-Run the complete reduced test suite from the repository root:
+Kjør den komplette, reduserte testpakken fra repository root:
 
 ```powershell
 .\run-tests.ps1
 ```
 
-Or use the npm shortcut:
+Eller bruk npm shortcut fra repository root:
 
 ```powershell
 npm run test:all
 ```
 
-The combined suite covers:
+Den samme samlede testen kan også kjøres fra `Test`-mappen med `npm run test:all`.
 
-- 55 backend unit tests
-- 3 backend integration smoke tests
-- 14 frontend unit tests
-- 1 Playwright E2E smoke test for the main scan flow
+Den kombinerte testpakken dekker:
 
-The test strategy is intentionally reduced for delivery. It protects the central scoring logic, API contract shape, frontend mapping/validation, and the main scan flow.
+- 55 enhetstester for backend
+- 3 integrasjons-/smoke-tester for backend
+- 14 enhetstester for frontend
+- 1 Playwright E2E smoke test for hovedflyten for skanning
 
-## External Services and Data Quality
+Teststrategien er bevisst redusert for levering. Den beskytter sentral scoring-logikk, API-kontraktens struktur, frontend mapping/validation og hovedflyten for skanning.
 
-The application depends on external systems and network behavior:
+## Eksterne tjenester og datakvalitet
 
-- SSL Labs for TLS and certificate analysis
-- Mozilla Observatory when available for HTTP header assessment
-- DNS lookups for email and domain resolution checks
-- VirusTotal for reputation data when an API key is configured
-- Direct HTTP requests for header probing
+Applikasjonen er avhengig av eksterne systemer og nettverksforhold:
 
-Because these sources are external, results can vary over time and may be affected by rate limits, network availability, provider downtime, or incomplete upstream data.
+- SSL Labs for TLS- og sertifikatanalyse
+- Mozilla Observatory når tilgjengelig for HTTP header-vurdering
+- DNS-oppslag for e-post- og domeneoppløsning
+- VirusTotal for omdømmedata når API-nøkkel er konfigurert
+- Direkte HTTP-requests for header probing
 
-## Limitations
+Fordi disse kildene er eksterne, kan resultatene variere over tid og påvirkes av rate limits, nettverkstilgjengelighet, nedetid hos leverandører eller ufullstendige upstream-data.
 
-- The database is in-memory and is not intended for persistent production storage.
-- The scoring model is a bachelor project implementation and should be interpreted as a prototype.
-- A clean or high score does not prove that a domain is secure.
-- Missing external data is handled defensively, but it can reduce assessment precision.
-- The project focuses on a selected set of observable domain-level indicators and does not inspect internal infrastructure, application source code, identity systems, or organizational processes.
+## Begrensninger
 
-## Delivery Notes
+- Databasen er in-memory og er ikke ment for persistent production storage.
+- Scoringmodellen er en bachelorprosjekt-implementasjon og bør tolkes som en prototype.
+- En clean eller high score beviser ikke at et domene er sikkert.
+- Manglende eksterne data håndteres defensivt, men det kan redusere presisjonen i vurderingen.
+- Prosjektet fokuserer på et utvalg observerbare indikatorer på domenenivå og undersøker ikke intern infrastruktur, applikasjonens kildekode, identity systems eller organisatoriske prosesser.
 
-Generated dependencies and build outputs are intentionally excluded from the repository and should not be included in delivery zip files:
+## Leveransenotater
+
+Genererte avhengigheter og build outputs er bevisst ekskludert fra repositoryet og bør ikke inkluderes i delivery zip files:
 
 ```text
 .git/
@@ -231,16 +233,16 @@ TestResults/
 *.temp
 ```
 
-The package lock files should remain in the repository. They make npm installation more reproducible while still allowing the recipient to install dependencies locally.
+Package lock files bør forbli i repositoryet. De gjør npm-installasjonen mer reproducerbar, samtidig som mottaker kan installere avhengigheter lokalt.
 
-## Academic Context
+## Akademisk kontekst
 
-For bachelor project delivery, this README is intended to document:
+For bachelorprosjektlevering er denne README-en ment å dokumentere:
 
-- what the system does
-- how the source code is organized
-- how to configure and run the application
-- how to execute the reduced validation suite
-- which assumptions and limitations apply
+- hva systemet gjør
+- hvordan kildekoden er organisert
+- hvordan applikasjonen kan konfigureres og kjøres
+- hvordan den reduserte validation-testpakken kan kjøres
+- hvilke antakelser og begrensninger som gjelder
 
-Detailed theoretical background, methodology, discussion, and evaluation should remain in the bachelor thesis/report itself. This repository README focuses on reproducibility and technical handover.
+Detaljert teoretisk bakgrunn, metode, diskusjon og evaluering bør fortsatt ligge i bacheloroppgaven eller prosjektrapporten. Denne README-en fokuserer på reproducerbarhet og teknisk overlevering.

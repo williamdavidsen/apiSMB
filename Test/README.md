@@ -8,7 +8,6 @@ This folder contains a reduced test set for the security assessment application.
 - `API.IntegrationTests`: small API smoke tests for assessment endpoints and dashboard contract shape.
 - `Frontend.UnitTests`: Vitest tests for domain validation, score/status mapping, and assessment dashboard mapping.
 - `E2E`: one Playwright smoke test for the main scan flow.
-- `ManualTests`: short delivery checklist for final manual verification.
 - `Reports`: short test summary report.
 
 ## Commands
@@ -55,6 +54,5 @@ The reduced strategy keeps only tests that protect the main product behavior:
 - Integration smoke tests for the API endpoints used by the dashboard.
 - Frontend unit tests for user input and score/status presentation logic.
 - One E2E smoke test for starting a scan and reaching the dashboard.
-- A manual checklist for final delivery checks that are cheaper to verify by hand.
 
 Coverage reports, visual regression, automated accessibility checks, load tests, resilience scripts, traceability matrices, live domain batch validation, and detailed test design documents were removed to keep the project focused on the application itself.
